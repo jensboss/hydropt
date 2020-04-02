@@ -1,2 +1,2 @@
 # dynProg
-Stochastic dynamic prgrogramming for optimizaiton of hydro power plants
+Stochastic dynamic prgrogramming for the optimizaiton of hydro power plants
