@@ -7,7 +7,22 @@ Created on Thu Apr  9 17:14:02 2020
 """
 
 import numpy as np
-from dyn_prog import kron_indices
+from dyn_prog import kron_index, kron_indices
+
+class BasinLevels():
+    def __init__(self, level_empty, level_full=None, basin=None, vol_to_level_lut=None):
+        self.basin = basin
+        self.level_empty = level_empty
+        
+        if level_full is None:
+            self.level_full = level_empty
+        else:
+            self.level_full = level_full
+            
+        self.vol_to_level_lut = vol_to_level_lut
+        
+    def levels(self):
+        return np.linspace(self.level_empty, self.level_full, self.basin.num_states)
 
 class Basin():
     def __init__(self, vol, num_states, content, height, name=None, power_plant=None):
@@ -15,7 +30,13 @@ class Basin():
         self.vol = vol
         self.num_states = num_states
         self.content = content
-        self.height = height
+        
+        if isinstance(height, BasinLevels):
+            self.height = height
+            self.height.basin = self
+        else:
+            self.height = BasinLevels(height, basin=self)
+            
         self.power_plant = power_plant
         
     def index(self):
@@ -23,6 +44,15 @@ class Basin():
             return None
         else:
             return self.power_plant.basin_index(self)
+        
+    def levels(self):
+        if self.power_plant is None:
+            return self.height.level_empty
+        else:
+            basin_num_states = self.power_plant.basin_num_states()
+            index = self.power_plant.basin_index(self)
+            return self.height.levels()[kron_index(basin_num_states, index)]
+            
         
     def __repr__(self):
         if self.name is None:
@@ -40,7 +70,7 @@ class Action():
         self.turbine = turbine
         self.flow_rate = flow_rate
         
-    def turbine_prod(self):
+    def turbine_power(self):
         return self.turbine.power(self.flow_rate)
         
     def __repr__(self):
@@ -52,8 +82,8 @@ class ProductAction():
         self.actions = tuple(actions)
         self.power_plant = power_plant
         
-    def turbine_prod(self):
-        return [action.turbine_prod() for action in self.actions]
+    def turbine_power(self):
+        return [action.turbine_power() for action in self.actions]
     
     def basin_flow_rates(self):
         basins = self.power_plant.basins
@@ -76,8 +106,8 @@ class ActionCollection():
     def __init__(self, actions):
         self.actions = actions
         
-    def turbine_prod(self):
-        return [action.turbine_prod() for action in self.actions]
+    def turbine_power(self):
+        return [action.turbine_power() for action in self.actions]
     
     def basin_flow_rates(self):
         return [action.basin_flow_rates() for action in self.actions]
@@ -85,6 +115,7 @@ class ActionCollection():
     def __repr__(self):
         return f"ActionCollection({self.actions})"
         
+
         
 class Turbine():
     def __init__(self, name, nu, flow_rates, upper_basin, lower_basin):
@@ -98,21 +129,23 @@ class Turbine():
         return [Action(self, flow_rate=flow_rate) for flow_rate in self.flow_rates]
     
     def head(self):
-        return self.upper_basin.height - self.lower_basin.height
+        return self.upper_basin.levels() - self.lower_basin.levels()
     
     def power(self, flow_rate):
         return self.nu*(1000*9.81)*self.head()*flow_rate
     
     def __repr__(self):
         return f"Turbine('{self.name}')"
-    
+
+
     
 class PlantModel():
-    def __init__(self, basins=None, turbines=None):
+    def __init__(self, basins=None, turbines=None, constraints=None):
         self._basins = []
         self._basin_index = {}
         self.add_basins(basins)      
         self.turbines = turbines
+        self.constraints = constraints
         
     @property
     def basins(self):
