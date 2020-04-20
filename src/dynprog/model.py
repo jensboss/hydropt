@@ -7,7 +7,8 @@ Created on Thu Apr  9 17:14:02 2020
 """
 
 import numpy as np
-from dyn_prog import kron_index, kron_indices
+
+from dynprog.core import kron_index, kron_indices
 
 class BasinLevels():
     def __init__(self, level_empty, level_full=None, basin=None, vol_to_level_lut=None):
@@ -139,7 +140,7 @@ class Turbine():
 
 
     
-class PlantModel():
+class Plant():
     def __init__(self, basins=None, turbines=None, constraints=None):
         self._basins = []
         self._basin_index = {}
