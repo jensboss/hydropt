@@ -11,32 +11,32 @@ import numpy as np
 from dynprog.core import kron_index, kron_indices
 
 class BasinLevels():
-    def __init__(self, level_empty, level_full=None, basin=None, vol_to_level_lut=None):
+    def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None):
         self.basin = basin
-        self.level_empty = level_empty
+        self.empty = empty
         
-        if level_full is None:
-            self.level_full = level_empty
+        if full is None:
+            self.full = empty
         else:
-            self.level_full = level_full
+            self.full = full
             
         self.vol_to_level_lut = vol_to_level_lut
         
     def levels(self):
-        return np.linspace(self.level_empty, self.level_full, self.basin.num_states)
+        return np.linspace(self.empty, self.full, self.basin.num_states)
 
 class Basin():
-    def __init__(self, vol, num_states, content, height, name=None, power_plant=None):
+    def __init__(self, vol, num_states, content, basin_levels, name=None, power_plant=None):
         self.name = name
         self.vol = vol
         self.num_states = num_states
         self.content = content
         
-        if isinstance(height, BasinLevels):
-            self.height = height
-            self.height.basin = self
+        if isinstance(basin_levels, BasinLevels):
+            self.basin_levels = basin_levels
+            self.basin_levels.basin = self
         else:
-            self.height = BasinLevels(height, basin=self)
+            self.basin_levels = BasinLevels(basin_levels, basin=self)
             
         self.power_plant = power_plant
         
@@ -48,11 +48,11 @@ class Basin():
         
     def levels(self):
         if self.power_plant is None:
-            return self.height.level_empty
+            return self.basin_levels.empty
         else:
             basin_num_states = self.power_plant.basin_num_states()
             index = self.power_plant.basin_index(self)
-            return self.height.levels()[kron_index(basin_num_states, index)]
+            return self.basin_levels.levels()[kron_index(basin_num_states, index)]
             
         
     def __repr__(self):
@@ -62,14 +62,15 @@ class Basin():
     
     
 class Outflow(Basin):
-    def __init__(self, height, name='Outflow'):
-        super().__init__(vol=1, num_states=2, content=0, height=height, name=name)
+    def __init__(self, outflow_level, name='Outflow'):
+        super().__init__(vol=1, num_states=2, content=0, basin_levels=outflow_level, name=name)
         
         
 class Action():
-    def __init__(self, turbine, flow_rate):
+    def __init__(self, turbine, flow_rate=None, flow_rate_range=None):
         self.turbine = turbine
         self.flow_rate = flow_rate
+        self.flow_rate_range = flow_rate_range
         
     def turbine_power(self):
         return self.turbine.power(self.flow_rate)

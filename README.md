@@ -1,10 +1,14 @@
 # dynprog
 Dynamic prgrogramming tool for the optimization of hydro power plants
 
-# Installation
+## Installation
 
 Run the following to install:
 
-```Python
+```bash
 pip install dynprog
 ```
+
+## Usage
+
+TODO: Add sample code.

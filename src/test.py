@@ -14,18 +14,36 @@ from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 
 
-# TODO: height --> rename as level_range
-basins = [Basin(name='basin_1', vol=81, num_states=21, content=10, height=BasinLevels(2000,2120)),
-          Basin(name='basin_2', vol=31, num_states=11, content=10, height=BasinLevels(1200,1250))]
+basins = [Basin(name='basin_1', 
+                vol=81, 
+                num_states=21, 
+                content=10, 
+                basin_levels=BasinLevels(empty=2000, full=2120)),
+          Basin(name='basin_2', 
+                vol=31, 
+                num_states=11, 
+                content=10, 
+                basin_levels=BasinLevels(empty=1200, full=1250))
+          ]
 
-outflow = Outflow(height=600)
+outflow = Outflow(outflow_level=600)
 
-turbines = [Turbine('turbine_1', nu=0.8, flow_rates=[0, 5], 
-                    upper_basin=basins[0], lower_basin=basins[1]),
-            Turbine('turbine_2a', nu=0.8, flow_rates=[0, 2], 
-                    upper_basin=basins[1], lower_basin=outflow),
-            Turbine('turbine_2b', nu=0.7, flow_rates=[0, 2], 
-                    upper_basin=basins[1], lower_basin=outflow)]
+turbines = [Turbine('turbine_1', 
+                    nu=0.8, 
+                    flow_rates=[0, 5], 
+                    upper_basin=basins[0], 
+                    lower_basin=basins[1]),
+            Turbine('turbine_2a', 
+                    nu=0.8, 
+                    flow_rates=[0, 2], 
+                    upper_basin=basins[1], 
+                    lower_basin=outflow),
+            Turbine('turbine_2b', 
+                    nu=0.7, 
+                    flow_rates=[0, 2], 
+                    upper_basin=basins[1], 
+                    lower_basin=outflow)
+            ]
 
 plant = Plant(basins, turbines)    
 
