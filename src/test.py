@@ -16,12 +16,12 @@ from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 basins = [Basin(name='basin_1', 
                 vol=81, 
-                num_states=21, 
+                num_states=81, 
                 content=10, 
                 basin_levels=BasinLevels(empty=2000, full=2120)),
           Basin(name='basin_2', 
                 vol=31, 
-                num_states=11, 
+                num_states=41, 
                 content=10, 
                 basin_levels=BasinLevels(empty=1200, full=1250))
           ]
@@ -33,13 +33,8 @@ turbines = [Turbine('turbine_1',
                     flow_rates=[0, 5], 
                     upper_basin=basins[0], 
                     lower_basin=basins[1]),
-            Turbine('turbine_2a', 
+            Turbine('turbine_2', 
                     nu=0.8, 
-                    flow_rates=[0, 2], 
-                    upper_basin=basins[1], 
-                    lower_basin=outflow),
-            Turbine('turbine_2b', 
-                    nu=0.7, 
                     flow_rates=[0, 2], 
                     upper_basin=basins[1], 
                     lower_basin=outflow)
@@ -47,7 +42,7 @@ turbines = [Turbine('turbine_1',
 
 plant = Plant(basins, turbines)    
 
-n_steps = 24*7
+n_steps = 24*7*1
 hpfc = 10*(np.sin(2*np.pi*2*np.arange(n_steps)/n_steps) + 1)
 inflow = 0.8*np.ones((n_steps,2))
 
