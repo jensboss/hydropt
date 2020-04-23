@@ -84,7 +84,7 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
         # loop through all actions and every state
         for act_index, (turbine_action, basin_action) in enumerate(zip(turbine_actions, basin_actions)):
             # L = transition_matrix(volume, num_states, basin_action-inflow_now)
-            L = trans_matrix_2(volume, num_states, kron_action(basin_action-inflow_now, num_states_tot))
+            L = trans_matrix(volume, num_states, kron_action(basin_action-inflow_now, num_states_tot))
             # if not np.all(L.todense()==L2.todense()):
             #     print(L.todense(), L2.todense())
             immediate_reward = np.sum(turbine_action*hpfc_now)
@@ -166,7 +166,7 @@ def transition_coo_matrix_params(vols, num_states, q, basin_index):
     return data, (i_comb, j_comb), (m,m)
     
 
-def trans_matrix_2(vols, num_states, q):
+def trans_matrix(vols, num_states, q):
     L_combined = None
     for k in np.arange(vols.shape[0]):
         data, coords, shape = transition_coo_matrix_params(vols[k], num_states, q[k], k)
