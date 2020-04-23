@@ -52,7 +52,7 @@ scenario = Scenario(plant, underlyings, name='base')
 optimizer = ScenarioOptimizer(scenario)
 optimizer.run()
 
-plt.figure(1)
+plt.figure(2)
 plt.clf()
 plt.plot(hpfc, marker='.', label='hpfc')
 plt.plot(10*inflow, marker='.', label='inflow')

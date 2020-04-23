@@ -29,7 +29,7 @@ def transition_matrix(V, num_states, q):
                          shape=(num_states[k],num_states[k]),
                          dtype=np.float64)
         L_combined = sparse.kron(L_combined, L)
-    return L_combined
+    return L_combined.tocsc()
 
 
 
@@ -75,18 +75,22 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
     rewards_to_evaluate = np.zeros((turbine_actions.shape[0], num_states_tot))
     action_grid = np.zeros((n_steps, num_states_tot), dtype=np.int64)
     value_grid = np.zeros((n_steps,num_states_tot))
+    action_cache = dict()
     
     # loop backwords through time (backward induction)
     for k in np.arange(n_steps):
         hpfc_now = hpfc[(n_steps-1)-k]
         inflow_now = inflow[(n_steps-1)-k, :]
-        
+        L_inflow = transition_matrix(volume, num_states, -inflow_now)
         # loop through all actions and every state
+        
         for act_index, (turbine_action, basin_action) in enumerate(zip(turbine_actions, basin_actions)):
-            # L = transition_matrix(volume, num_states, basin_action-inflow_now)
-            L = trans_matrix(volume, num_states, kron_action(basin_action-inflow_now, num_states_tot))
-            # if not np.all(L.todense()==L2.todense()):
-            #     print(L.todense(), L2.todense())
+            if act_index in action_cache:
+                L_turbine = action_cache[act_index]
+            else:    
+                L_turbine = trans_matrix(volume, num_states, kron_action(basin_action, num_states_tot))
+                action_cache[act_index] = L_turbine
+            L = L_inflow @ L_turbine
             immediate_reward = np.sum(turbine_action*hpfc_now)
             future_reward = L.T.dot(value) 
             # TODO: Normalize penalty
@@ -170,7 +174,7 @@ def trans_matrix(vols, num_states, q):
     L_combined = None
     for k in np.arange(vols.shape[0]):
         data, coords, shape = transition_coo_matrix_params(vols[k], num_states, q[k], k)
-        L = sparse.coo_matrix((data, coords), shape=shape).todia()
+        L = sparse.coo_matrix((data, coords), shape=shape).tocsc()
         if L_combined is None:
             L_combined = L
         else:
