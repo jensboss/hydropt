@@ -132,9 +132,9 @@ class ActionCollection():
 
         
 class Turbine():
-    def __init__(self, name, nu, flow_rates, upper_basin, lower_basin):
+    def __init__(self, name, efficiency, flow_rates, upper_basin, lower_basin):
         self.name = name
-        self.nu = nu
+        self.efficiency = efficiency
         self.flow_rates = flow_rates
         self.upper_basin = upper_basin
         self.lower_basin = lower_basin
@@ -146,7 +146,7 @@ class Turbine():
         return self.upper_basin.kron_levels() - self.lower_basin.kron_levels()
     
     def power(self, flow_rate):
-        return self.nu*(1000*9.81)*self.head()*flow_rate
+        return self.efficiency*(1000*9.81)*self.head()*flow_rate
     
     def __repr__(self):
         return f"Turbine('{self.name}')"

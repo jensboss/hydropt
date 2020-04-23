@@ -29,12 +29,12 @@ basins = [Basin(name='basin_1',
 outflow = Outflow(outflow_level=600)
 
 turbines = [Turbine('turbine_1', 
-                    nu=0.8, 
+                    efficiency=0.8, 
                     flow_rates=[0, 5], 
                     upper_basin=basins[0], 
                     lower_basin=basins[1]),
             Turbine('turbine_2', 
-                    nu=0.8, 
+                    efficiency=0.8, 
                     flow_rates=[0, 2], 
                     upper_basin=basins[1], 
                     lower_basin=outflow)
