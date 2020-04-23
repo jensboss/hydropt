@@ -8,7 +8,6 @@ Created on Wed Apr 15 14:06:02 2020
 
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 
 from dynprog.core import backward_induction, forward_propagation
 
@@ -51,7 +50,7 @@ class ScenarioOptimizer():
         
         volume = self.scenario.model.basin_volumes()
         num_states = self.scenario.model.basin_num_states()
-        basins_contents = self.scenario.model.basin_contents()
+        basins_init_volumes = self.scenario.model.basin_init_volumes()
         
         penalty = self.basin_limit_penalty  
         
@@ -66,7 +65,7 @@ class ScenarioOptimizer():
         
         t_start = time.time()
         turbine_act_taken, basin_act_taken, vol = forward_propagation(n_steps, volume, 
-                                                                    num_states, basins_contents,
+                                                                    num_states, basins_init_volumes,
                                                                     turbine_actions, 
                                                                     basin_actions, inflow, 
                                                                     action_grid)

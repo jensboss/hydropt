@@ -22,22 +22,20 @@ class BasinLevels():
             
         self.vol_to_level_lut = vol_to_level_lut
         
-    def levels(self):
+    @property
+    def values(self):
         return np.linspace(self.empty, self.full, self.basin.num_states)
 
 class Basin():
-    def __init__(self, vol, num_states, content, basin_levels, name=None, power_plant=None):
+    def __init__(self, volume, num_states, init_volume, levels, name=None, power_plant=None):
         self.name = name
-        self.vol = vol
+        self.volume = volume
         self.num_states = num_states
-        self.content = content
+        self.init_volume = init_volume
         
-        if isinstance(basin_levels, BasinLevels):
-            self.basin_levels = basin_levels
-            self.basin_levels.basin = self
-        else:
-            self.basin_levels = BasinLevels(basin_levels, basin=self)
-            
+        self._levels = None
+        self.levels = levels
+        
         self.power_plant = power_plant
         
     def index(self):
@@ -45,25 +43,39 @@ class Basin():
             return None
         else:
             return self.power_plant.basin_index(self)
-        
+       
+    @property
     def levels(self):
+        return self._levels
+        
+        
+    @levels.setter
+    def levels(self, levels):
+        if isinstance(levels, BasinLevels):
+            self._levels = levels
+            self._levels.basin = self
+        elif isinstance(levels, tuple):
+            self._levels = BasinLevels(empty=levels[0], full=levels[1], basin=self)
+        else:
+            self._levels = BasinLevels(levels, basin=self)
+            
+    def kron_levels(self):
         if self.power_plant is None:
-            return self.basin_levels.empty
+            return self._levels.empty
         else:
             basin_num_states = self.power_plant.basin_num_states()
             index = self.power_plant.basin_index(self)
-            return self.basin_levels.levels()[kron_index(basin_num_states, index)]
-            
+            return self._levels.values[kron_index(basin_num_states, index)]
         
     def __repr__(self):
         if self.name is None:
             name = f'basin_{self.index()}'
-        return f"Basin('{name}', {self.vol}, {self.num_states})"
+        return f"Basin('{name}', {self.volume}, {self.num_states})"
     
     
 class Outflow(Basin):
     def __init__(self, outflow_level, name='Outflow'):
-        super().__init__(vol=1, num_states=2, content=0, basin_levels=outflow_level, name=name)
+        super().__init__(volume=1, num_states=2, init_volume=0, levels=outflow_level, name=name)
         
         
 class Action():
@@ -131,7 +143,7 @@ class Turbine():
         return [Action(self, flow_rate=flow_rate) for flow_rate in self.flow_rates]
     
     def head(self):
-        return self.upper_basin.levels() - self.lower_basin.levels()
+        return self.upper_basin.kron_levels() - self.lower_basin.kron_levels()
     
     def power(self, flow_rate):
         return self.nu*(1000*9.81)*self.head()*flow_rate
@@ -163,13 +175,13 @@ class Plant():
         return self._basin_index[basin]
         
     def basin_volumes(self):
-        return np.array([basin.vol for basin in self.basins])
+        return np.array([basin.volume for basin in self.basins])
     
     def basin_num_states(self):
         return np.array([basin.num_states for basin in self.basins])
     
-    def basin_contents(self):
-        return np.array([basin.content for basin in self.basins])
+    def basin_init_volumes(self):
+        return np.array([basin.init_volume for basin in self.basins])
     
     def basin_names(self):
         return np.array([basin.names for basin in self.basins])

@@ -15,15 +15,15 @@ from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 
 basins = [Basin(name='basin_1', 
-                vol=81, 
+                volume=81, 
                 num_states=81, 
-                content=10, 
-                basin_levels=BasinLevels(empty=2000, full=2120)),
+                init_volume=10, 
+                levels=(2000, 2120)),
           Basin(name='basin_2', 
-                vol=31, 
+                volume=31, 
                 num_states=41, 
-                content=10, 
-                basin_levels=BasinLevels(empty=1200, full=1250))
+                init_volume=10, 
+                levels=(1200, 1250))
           ]
 
 outflow = Outflow(outflow_level=600)
