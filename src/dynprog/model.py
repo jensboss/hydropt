@@ -8,7 +8,7 @@ Created on Thu Apr  9 17:14:02 2020
 
 import numpy as np
 
-from dynprog.core import kron_index, kron_indices
+from dynprog.core import kron_index, kron_indices, kron_action
 
 class BasinLevels():
     def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None):
@@ -87,6 +87,13 @@ class BaseAction():
         
     def flow_rate(self):
         raise NotImplementedError
+        
+    def turbine_power(self):
+        num_states = self.turbine.upper_basin.power_plant.num_states()
+        return self.power()*np.ones((num_states, ))
+            
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.turbine})"
 
 class ActionPowerFixed(BaseAction):
     def __init__(self, fixed_power, turbine=None):
@@ -146,6 +153,7 @@ class ProductAction():
         return [action.turbine_power() for action in self.actions]
     
     def basin_flow_rates(self):
+        num_states_tot = self.power_plant.num_states()
         basins = self.power_plant.basins
         basin_flow_rates = len(basins)*[0]
         for action in self.actions:
@@ -156,7 +164,7 @@ class ProductAction():
             if inflow_ind is not None:
                 basin_flow_rates[inflow_ind] -= action.flow_rate
                 
-        return basin_flow_rates
+        return kron_action(basin_flow_rates, num_states_tot)
         
     def __repr__(self):
         return f"ProductAction({self.actions})"
@@ -185,9 +193,13 @@ class Turbine():
         self.base_load = base_load
         self.upper_basin = upper_basin
         self.lower_basin = lower_basin
-        self._actions = actions
+        
         self.efficiency = efficiency
         self.flow_rates = flow_rates
+        
+        self._actions = actions
+        for action in self._actions:
+            action.turbine = self
         
     def actions(self):
         return [Action(self, flow_rate=flow_rate) for flow_rate in self.flow_rates]
@@ -248,8 +260,26 @@ class Plant():
             actions.append(turbine.actions())
         return actions
     
+    def _turbine_actions(self):
+        actions = list()
+        for turbine in self.turbines:
+            actions.append(turbine._actions)
+        return actions
+    
     def actions(self):
         turbine_actions = self.turbine_actions()
+        num_actions = [len(a) for a in turbine_actions]
+        combinations = kron_indices(num_actions, range(len(num_actions)))
+        product_actions = []
+        for comb in combinations:
+            group = []
+            for k in range(len(comb)):
+                group.append(turbine_actions[k][comb[k]])
+            product_actions.append(ProductAction(group, self))
+        return ActionCollection(product_actions)
+    
+    def _actions(self):
+        turbine_actions = self._turbine_actions()
         num_actions = [len(a) for a in turbine_actions]
         combinations = kron_indices(num_actions, range(len(num_actions)))
         product_actions = []

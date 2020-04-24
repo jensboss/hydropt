@@ -88,7 +88,8 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
             if act_index in action_cache:
                 L_turbine = action_cache[act_index]
             else:    
-                L_turbine = trans_matrix(volume, num_states, kron_action(basin_action, num_states_tot))
+                # L_turbine = trans_matrix(volume, num_states, kron_action(basin_action, num_states_tot))
+                L_turbine = trans_matrix(volume, num_states, basin_action)
                 action_cache[act_index] = L_turbine
             L = L_inflow @ L_turbine
             immediate_reward = np.sum(turbine_action*hpfc_now)
@@ -121,7 +122,7 @@ def forward_propagation(n_steps, volume, num_states, basins_contents, turbine_ac
     
     for k in np.arange(n_steps):
         state_index = np.dot(state_finder, np.int64(np.round((num_states-1)*vol[k, :]/volume)))
-        basin_actions_taken[k] = basin_actions[action_grid[k, state_index]]
+        basin_actions_taken[k] = basin_actions[action_grid[k, state_index]][:,state_index]
         turbine_actions_taken[k] = turbine_actions[action_grid[k, state_index]][:,state_index]
         vol[k+1, :] = vol[k,:] - basin_actions_taken[k, :] + inflow[k, :]
         
