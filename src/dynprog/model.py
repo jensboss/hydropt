@@ -78,6 +78,52 @@ class Outflow(Basin):
         super().__init__(volume=1, num_states=2, init_volume=0, levels=outflow_level, name=name)
         
         
+class BaseAction():
+    def __init__(self, turbine=None):
+        self.turbine = turbine
+        
+    def power(self):
+        raise NotImplementedError
+        
+    def flow_rate(self):
+        raise NotImplementedError
+
+class ActionPowerFixed(BaseAction):
+    def __init__(self, fixed_power, turbine=None):
+        super().__init__(turbine)
+        self.fixed_power = fixed_power
+        
+    def power(self):
+        return self.fixed_power
+    
+    def flow_rate(self):
+        return self.turbine.flow_rate(self.fixed_power)
+    
+class ActionStanding(ActionPowerFixed):
+    def __init__(self, turbine=None):
+        super().__init__(0.0, turbine)
+        
+class ActionMin(BaseAction):
+    def __init__(self, turbine=None):
+        super().__init__(turbine)
+        
+    def power(self):
+        return self.turbine.base_load
+    
+    def flow_rate(self):
+        return self.turbine.flow_rate(self.turbine.base_load)
+        
+class ActionMax(BaseAction):
+    def __init__(self, turbine=None):
+        super().__init__(turbine)
+        
+    def power(self):
+        return self.turbine.max_power
+    
+    def flow_rate(self):
+        return self.turbine.flow_rate(self.turbine.max_power)
+    
+    
 class Action():
     def __init__(self, turbine, flow_rate=None, flow_rate_range=None):
         self.turbine = turbine
@@ -132,12 +178,16 @@ class ActionCollection():
 
         
 class Turbine():
-    def __init__(self, name, efficiency, flow_rates, upper_basin, lower_basin):
+    def __init__(self, name, max_power, base_load, 
+                 upper_basin, lower_basin, efficiency, flow_rates, actions=None):
         self.name = name
-        self.efficiency = efficiency
-        self.flow_rates = flow_rates
+        self.max_power = max_power
+        self.base_load = base_load
         self.upper_basin = upper_basin
         self.lower_basin = lower_basin
+        self._actions = actions
+        self.efficiency = efficiency
+        self.flow_rates = flow_rates
         
     def actions(self):
         return [Action(self, flow_rate=flow_rate) for flow_rate in self.flow_rates]
@@ -147,6 +197,9 @@ class Turbine():
     
     def power(self, flow_rate):
         return self.efficiency*(1000*9.81)*self.head()*flow_rate
+    
+    def flow_rate(self, power):
+        return (power/(self.efficiency*(1000*9.81)))/self.head()
     
     def __repr__(self):
         return f"Turbine('{self.name}')"

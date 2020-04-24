@@ -9,9 +9,9 @@ Created on Mon Apr 20 16:13:07 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dynprog.model import Basin, BasinLevels, Outflow, Turbine, Plant
+from dynprog.model import Basin, Outflow, Turbine, Plant, ActionStanding, \
+    ActionMin, ActionMax
 from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
-
 
 
 basins = [Basin(name='basin_1', 
@@ -29,15 +29,21 @@ basins = [Basin(name='basin_1',
 outflow = Outflow(outflow_level=600)
 
 turbines = [Turbine('turbine_1', 
+                    max_power = 33000000.0,
+                    base_load = 10000000.0,
                     efficiency=0.8, 
                     flow_rates=[0, 5], 
                     upper_basin=basins[0], 
-                    lower_basin=basins[1]),
+                    lower_basin=basins[1],
+                    actions=[ActionStanding(), ActionMax()]),
             Turbine('turbine_2', 
+                    max_power = 15000000.0,
+                    base_load = 2000000.0,
                     efficiency=0.8, 
                     flow_rates=[0, 2], 
                     upper_basin=basins[1], 
-                    lower_basin=outflow)
+                    lower_basin=outflow,
+                    actions=[ActionStanding(), ActionMax()])
             ]
 
 plant = Plant(basins, turbines)    
