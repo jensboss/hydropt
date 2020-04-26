@@ -11,6 +11,7 @@ import numpy as np
 from dynprog.core import kron_index, kron_indices
 
 
+
 class BasinLevels():
     def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None):
         self.basin = basin
@@ -30,6 +31,7 @@ class BasinLevels():
         if self._values is None and self.vol_to_level_lut is None:
             self._values = np.linspace(self.empty, self.full, self.basin.num_states)
         return self._values
+
 
 class Basin():
     def __init__(self, volume, num_states, init_volume, levels, name=None, power_plant=None):
@@ -53,7 +55,6 @@ class Basin():
     def levels(self):
         return self._levels
         
-        
     @levels.setter
     def levels(self, levels):
         if isinstance(levels, BasinLevels):
@@ -76,13 +77,14 @@ class Basin():
         if self.name is None:
             name = f'basin_{self.index()}'
         return f"Basin('{name}', {self.volume}, {self.num_states})"
-    
+
     
 class Outflow(Basin):
     def __init__(self, outflow_level, name='Outflow'):
         super().__init__(volume=1, num_states=2, init_volume=0, levels=outflow_level, name=name)
         
-        
+
+
 class BaseAction():
     def __init__(self, turbine=None):
         self.turbine = turbine
@@ -96,44 +98,22 @@ class BaseAction():
     def __repr__(self):
         return f"{self.__class__.__name__}({self.turbine})"
 
+
 class ActionPowerFixed(BaseAction):
-    def __init__(self, fixed_power, turbine=None):
+    def __init__(self, power, turbine=None):
         super().__init__(turbine)
-        self.fixed_power = fixed_power
+        self.power = power
         
     def turbine_power(self):
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.fixed_power*np.ones((num_plant_states,))
+        return self.power*np.ones((num_plant_states,))
     
     def basin_flow_rates(self):
-        return self.turbine.flow_rate(self.fixed_power)
+        return self.turbine.flow_rate(self.power)
     
-class ActionStanding(ActionPowerFixed):
-    def __init__(self, turbine=None):
-        super().__init__(0.0, turbine)
-        
-class ActionMin(BaseAction):
-    def __init__(self, turbine=None):
-        super().__init__(turbine)
-        
-    def turbine_power(self):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.turbine.base_load*np.ones((num_plant_states,))
-    
-    def basin_flow_rates(self):
-        return self.turbine.flow_rate(self.turbine.base_load)
-        
-class ActionMax(BaseAction):
-    def __init__(self, turbine=None):
-        super().__init__(turbine)
-        
-    def turbine_power(self):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.turbine.max_power*np.ones((num_plant_states,))
-    
-    def basin_flow_rates(self):
-        return self.turbine.flow_rate(self.turbine.max_power)
-    
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.turbine}, power={self.power})"
+
     
 class ActionFlowRateFixed(BaseAction):
     def __init__(self, flow_rate, turbine=None):
@@ -148,7 +128,37 @@ class ActionFlowRateFixed(BaseAction):
         return self.flow_rate*np.ones((num_plant_states,))
         
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.turbine}, {self.flow_rate})"
+        return f"{self.__class__.__name__}({self.turbine}, flow_rate={self.flow_rate})"
+
+    
+class ActionStanding(ActionFlowRateFixed):
+    def __init__(self, turbine=None):
+        super().__init__(0.0, turbine)
+        
+        
+class ActionMin(BaseAction):
+    def __init__(self, turbine=None):
+        super().__init__(turbine)
+        
+    def turbine_power(self):
+        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
+        return self.turbine.base_load*np.ones((num_plant_states,))
+    
+    def basin_flow_rates(self):
+        return self.turbine.flow_rate(self.turbine.base_load)
+
+        
+class ActionMax(BaseAction):
+    def __init__(self, turbine=None):
+        super().__init__(turbine)
+        
+    def turbine_power(self):
+        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
+        return self.turbine.max_power*np.ones((num_plant_states,))
+    
+    def basin_flow_rates(self):
+        return self.turbine.flow_rate(self.turbine.max_power)
+    
     
     
 class PlantAction():
