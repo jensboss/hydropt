@@ -186,17 +186,17 @@ class PowerPlantAction():
     
     
 class ActionCollection():
-    def __init__(self, product_actions):
-        self.product_actions = product_actions
+    def __init__(self, power_plant_actions):
+        self.power_plant_actions = power_plant_actions
         
     def turbine_power(self):
-        return [product_action.turbine_power() for product_action in self.product_actions]
+        return [product_action.turbine_power() for product_action in self.power_plant_actions]
     
     def basin_flow_rates(self):
-        return [product_action.basin_flow_rates() for product_action in self.product_actions]
+        return [product_action.basin_flow_rates() for product_action in self.power_plant_actions]
     
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.product_actions})"
+        return f"{self.__class__.__name__}({self.power_plant_actions})"
         
 
         
@@ -285,13 +285,13 @@ class Plant():
         turbine_actions = self.turbine_actions()
         num_actions = [len(a) for a in turbine_actions]
         combinations = kron_indices(num_actions, range(len(num_actions)))
-        product_actions = []
+        power_plant_actions = []
         for comb in combinations:
             group = []
             for k in range(len(comb)):
                 group.append(turbine_actions[k][comb[k]])
-            product_actions.append(PowerPlantAction(group, self))
-        return ActionCollection(product_actions)
+            power_plant_actions.append(PowerPlantAction(group, self))
+        return ActionCollection(power_plant_actions)
     
             
 
