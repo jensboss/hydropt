@@ -30,7 +30,7 @@ class Scenario():
         
         
 class ScenarioOptimizer():
-    def __init__(self, scenario=None, basin_limit_penalty=100000000000):
+    def __init__(self, scenario=None, basin_limit_penalty=1e14):
         self.scenario = scenario
         self.basin_limit_penalty = basin_limit_penalty
         self.action_grid = None
@@ -45,6 +45,7 @@ class ScenarioOptimizer():
         inflow = self.scenario.underlyings.inflow
         
         model_actions = self.scenario.model.actions()
+        
         turbine_actions = np.array(model_actions.turbine_power())
         basin_actions = np.array(model_actions.basin_flow_rates())
         

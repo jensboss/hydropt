@@ -92,10 +92,11 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
                 L_turbine = trans_matrix(volume, num_states, basin_action)
                 action_cache[act_index] = L_turbine
             L = L_inflow @ L_turbine
-            immediate_reward = np.sum(turbine_action*hpfc_now)
+            immediate_reward = np.sum(turbine_action*hpfc_now, axis=0)
             future_reward = L.T.dot(value) 
             # TODO: Normalize penalty
             penatly_reward = penalty*(1-np.sum(L, axis=0))
+            
             rewards_to_evaluate[act_index, :] = future_reward + immediate_reward - penatly_reward
 
         # find index of optimal action for each state
@@ -147,14 +148,14 @@ def transition_coo_matrix_params(vols, num_states, q, basin_index):
     
     dk_floor = np.int64(q/dvols)
     dk_ceil = np.int64(dk_floor + np.sign(q))
-    k_floor = index + dk_floor
-    k_ceil =  index + dk_ceil
+    k_floor = index - dk_floor
+    k_ceil =  index - dk_ceil
     
     valid_floor = valid_index_mask(k_floor, num_states[basin_index])
     valid_ceil = valid_index_mask(k_ceil, num_states[basin_index])
     
-    i_floor = j+dk_floor*basis_map
-    i_ceil = j+dk_ceil*basis_map
+    i_floor = j-dk_floor*basis_map
+    i_ceil = j-dk_ceil*basis_map
     
     p_ceil = (np.abs(q) % dvols)/dvols
     p_floor = 1 - p_ceil
@@ -180,7 +181,7 @@ def trans_matrix(vols, num_states, q):
             L_combined = L
         else:
             L_combined = L_combined @ L
-    return L_combined.T
+    return L_combined
 
 
 
