@@ -8,7 +8,8 @@ Created on Thu Apr  9 17:14:02 2020
 
 import numpy as np
 
-from dynprog.core import kron_index, kron_indices, kron_action
+from dynprog.core import kron_index, kron_indices
+
 
 class BasinLevels():
     def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None):
@@ -22,9 +23,13 @@ class BasinLevels():
             
         self.vol_to_level_lut = vol_to_level_lut
         
+        self._values = None
+        
     @property
     def values(self):
-        return np.linspace(self.empty, self.full, self.basin.num_states)
+        if self._values is None and self.vol_to_level_lut is None:
+            self._values = np.linspace(self.empty, self.full, self.basin.num_states)
+        return self._values
 
 class Basin():
     def __init__(self, volume, num_states, init_volume, levels, name=None, power_plant=None):
