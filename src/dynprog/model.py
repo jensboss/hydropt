@@ -92,7 +92,7 @@ class BaseAction():
     def turbine_power(self):
         raise NotImplementedError
         
-    def basin_flow_rates(self):
+    def flow_rates(self):
         raise NotImplementedError
         
     def __repr__(self):
@@ -108,7 +108,7 @@ class ActionPowerFixed(BaseAction):
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
         return self.power*np.ones((num_plant_states,))
     
-    def basin_flow_rates(self):
+    def flow_rates(self):
         return self.turbine.flow_rate(self.power)
     
     def __repr__(self):
@@ -123,7 +123,7 @@ class ActionFlowRateFixed(BaseAction):
     def turbine_power(self):
         return self.turbine.power(self.flow_rate)
     
-    def basin_flow_rates(self):
+    def flow_rates(self):
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
         return self.flow_rate*np.ones((num_plant_states,))
         
@@ -144,7 +144,7 @@ class ActionMin(BaseAction):
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
         return self.turbine.base_load*np.ones((num_plant_states,))
     
-    def basin_flow_rates(self):
+    def flow_rates(self):
         return self.turbine.flow_rate(self.turbine.base_load)
 
         
@@ -156,12 +156,11 @@ class ActionMax(BaseAction):
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
         return self.turbine.max_power*np.ones((num_plant_states,))
     
-    def basin_flow_rates(self):
+    def flow_rates(self):
         return self.turbine.flow_rate(self.turbine.max_power)
     
-    
-    
-class PlantAction():
+
+class PowerPlantAction():
     def __init__(self, actions, power_plant=None):
         self.actions = tuple(actions)
         self.power_plant = power_plant
@@ -175,10 +174,10 @@ class PlantAction():
         for action in self.actions:
             outflow_ind = action.turbine.upper_basin.index()
             if outflow_ind is not None:
-                basin_flow_rates[outflow_ind] += action.basin_flow_rates()
+                basin_flow_rates[outflow_ind] += action.flow_rates()
             inflow_ind = action.turbine.lower_basin.index()
             if inflow_ind is not None:
-                basin_flow_rates[inflow_ind] -= action.basin_flow_rates()
+                basin_flow_rates[inflow_ind] -= action.flow_rates()
                 
         return basin_flow_rates
         
@@ -291,7 +290,7 @@ class Plant():
             group = []
             for k in range(len(comb)):
                 group.append(turbine_actions[k][comb[k]])
-            product_actions.append(PlantAction(group, self))
+            product_actions.append(PowerPlantAction(group, self))
         return ActionCollection(product_actions)
     
             
