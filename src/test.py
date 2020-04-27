@@ -14,7 +14,7 @@ from dynprog.model import Basin, Outflow, Turbine, PowerPlant, ActionStanding, \
 from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 
-ActionMax()basins = [Basin(name='basin_1', 
+basins = [Basin(name='basin_1', 
                 volume=81, 
                 num_states=81, 
                 init_volume=10, 
