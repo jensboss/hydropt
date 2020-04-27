@@ -9,12 +9,12 @@ Created on Mon Apr 20 16:13:07 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dynprog.model import Basin, Outflow, Turbine, Plant, ActionStanding, \
-    ActionMin, ActionMax, ActionFlowRateFixed
+from dynprog.model import Basin, Outflow, Turbine, PowerPlant, ActionStanding, \
+    ActionMin, ActionMax
 from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 
-basins = [Basin(name='basin_1', 
+ActionMax()basins = [Basin(name='basin_1', 
                 volume=81, 
                 num_states=81, 
                 init_volume=10, 
@@ -41,10 +41,10 @@ turbines = [Turbine('turbine_1',
                     efficiency=0.8,
                     upper_basin=basins[1], 
                     lower_basin=outflow,
-                    actions=[ActionStanding(), ActionMin(), ActionFlowRateFixed(flow_rate=2)])
+                    actions=[ActionStanding(), ActionMin(), ActionMax()])
             ]
 
-plant = Plant(basins, turbines)    
+plant = PowerPlant(basins, turbines)    
 
 n_steps = 24*7*2
 

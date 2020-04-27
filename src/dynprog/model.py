@@ -185,7 +185,7 @@ class PowerPlantAction():
         return f"{self.__class__.__name__}({self.actions})"
     
     
-class ActionCollection():
+class PowerPlantActions():
     def __init__(self, power_plant_actions):
         self.power_plant_actions = power_plant_actions
         
@@ -236,10 +236,10 @@ class Turbine():
     
     def __repr__(self):
         return f"Turbine('{self.name}')"
-
+   
 
     
-class Plant():
+class PowerPlant():
     def __init__(self, basins=None, turbines=None, constraints=None):
         self._basins = []
         self._basin_index = {}
@@ -270,7 +270,7 @@ class Plant():
         return np.array([basin.init_volume for basin in self.basins])
     
     def basin_names(self):
-        return np.array([basin.names for basin in self.basins])
+        return [basin.names for basin in self.basins]
     
     def num_states(self):
         return np.prod(self.basin_num_states())
@@ -291,11 +291,9 @@ class Plant():
             for k in range(len(comb)):
                 group.append(turbine_actions[k][comb[k]])
             power_plant_actions.append(PowerPlantAction(group, self))
-        return ActionCollection(power_plant_actions)
+        return PowerPlantActions(power_plant_actions)
     
             
 
-class Underlyings():
-    def __init__(self, price_curve, inflows):
-        self.price_curve = price_curve
-        self.inflows = inflows    
+        
+        
