@@ -35,64 +35,87 @@ class TimeIndex():
     def __contains__(self, time):
         return (time in self.time_index)
 
-class TurbinePowerConstraint():
-    def __init__(self, turbine, abs_power_min=None, abs_power_max=None, 
-                 rel_power_min=None, rel_power_max=None, spinning=False):
+
+class AbsolutPowerConstraint():
+    def __init__(self, turbine, abs_power_min=None, abs_power_max=None):
         self.turbine = turbine
         self.abs_power_min = abs_power_min
         self.abs_power_max = abs_power_max
-        self.rel_power_min = rel_power_min
-        self.rel_power_max = rel_power_max
         
     def __eq__(self, other):
-        return (self.turbine is other.turbine and
-                self.abs_power_min == other.abs_power_min and
-                self.abs_power_max == other.abs_power_max and
-                self.rel_power_min == other.rel_power_min and
-                self.rel_power_max == other.rel_power_max)
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        else:     
+            return (self.turbine is other.turbine and
+                    self.abs_power_min == other.abs_power_min and
+                    self.abs_power_max == other.abs_power_max)
         
     def __hash__(self):
-        return hash((self.turbine, self.abs_power_min, self.abs_power_max,
-                     self.rel_power_min, self.rel_power_max))
+        return hash((self.turbine, self.abs_power_min, self.abs_power_max))
     
     def __repr__(self):
         constraints = ''
+        
         if self.abs_power_min is not None:
             constraints += f", abs_power_min={self.abs_power_min}"
         if self.abs_power_max is not None:
             constraints += f", abs_power_max={self.abs_power_max}"
-        if self.rel_power_min is not None:
-            constraints += f", rel_power_min={self.rel_power_min}"
-        if self.rel_power_max is not None:
-            constraints += f", abs_power_min={self.rel_power_max}"
             
         return f"{self.__class__.__name__}({self.turbine}{constraints})"
     
+    def copy(self):
+        return self.__class__(self.turbine, self.abs_power_min, self.abs_power_max)
+
+
+def non_func(a, b, func):
+    if a is not None and b is not None:
+        return func(a, b)
+    elif a is None and b is not None:
+        return b
+    elif a is not None and b is None:
+        return a
+    else:
+        return None
+    
+def none_min(a, b):
+    return non_func(a, b, min)
+
+def none_max(a, b):
+    return non_func(a, b, max)
+    
 class Constraints():
     def __init__(self, constraints=None):
-        if constraints is None:
-            self.constraints = []
-        else:
-            self.constraints = constraints
+        self.constraints = dict()
+        if constraints is not None:
+            for constraint in constraints:
+                self.append(constraint)
         
     def append(self, constraint):
-        self.constraints.append(constraint)
+        if constraint.turbine in self.constraints:
+            known_constraint = self.constraints[constraint.turbine]
+            
+            known_constraint.abs_power_min = none_max(known_constraint.abs_power_min, 
+                                                 constraint.abs_power_min)
+            known_constraint.abs_power_max = none_min(known_constraint.abs_power_max, 
+                                                 constraint.abs_power_max)
+        else:
+            self.constraints[constraint.turbine] = constraint.copy()
         
     def __repr__(self):
-         return f"Constraints({self.constraints})"
+         return f"Constraints({list(self.constraints.values())})"
+
     
 class ConstrainedInterval():
     def __init__(self, start_time, end_time, constraint=None, turbine=None, 
-                 abs_power_min=None, abs_power_max=None, rel_power_min=None, 
-                 rel_power_max=None, spinning=False):
+                 abs_power_min=None, abs_power_max=None):
         
         self.start_time = np.datetime64(start_time)
         self.end_time = np.datetime64(end_time)
         
         if constraint is None:
-            self.constraint = TurbinePowerConstraint(turbine, abs_power_min, 
-                                                     abs_power_max, rel_power_min, 
-                                                     rel_power_max, spinning)
+            self.constraint = AbsolutPowerConstraint(turbine, 
+                                                     abs_power_min, 
+                                                     abs_power_max)
         else:
             self.constraint = constraint
             
@@ -106,8 +129,6 @@ class ConstrainedInterval():
     def __contains__(self, time):
         return self.start_time <= np.datetime64(time) < self.end_time
     
-   
-        
         
 class ConstrainedIntervals():
     def __init__(self, constrained_intervals):
@@ -178,7 +199,7 @@ if __name__ == '__main__':
                              ConstrainedInterval('2020-04-26', 
                                                  '2020-04-27T05', 
                                                  turbine=turbines[0],
-                                                 rel_power_max=2e6)]
+                                                 abs_power_min=1.5e6)]
     
     print(constrained_intervals[0].constraint)
     
