@@ -10,21 +10,29 @@ import numpy as np
 import time
 
 from dynprog.core import backward_induction, forward_propagation
+from dynprog.constraints import ConstrainedIntervals
 
 
 class Underlyings():
-    def __init__(self, price_curve=None, inflow=None, sampling_time=1):
+    def __init__(self, time, price_curve=None, inflow=None):
+        self.time = time
         self.price_curve = price_curve
         self.inflow = inflow
-        self.sampling_time = sampling_time
         
     def n_steps(self):
-        return self.price_curve.shape[0]
+        return self.time.shape[0]
+    
         
 class Scenario():
-    def __init__(self, model, underlyings, water_value_end=0, name=None):
-        self.model = model
+    def __init__(self, power_plant, underlyings, constraints=None, water_value_end=0, name=None):
+        self.power_plant = power_plant
         self.underlyings = underlyings
+        
+        if constraints is None:
+            self.constraints = ConstrainedIntervals()
+        else:
+            self.constraints = constraints
+            
         self.water_value_end = water_value_end
         self.name = name
         
@@ -44,14 +52,14 @@ class ScenarioOptimizer():
         price_curve = self.scenario.underlyings.price_curve
         inflow = self.scenario.underlyings.inflow
         
-        model_actions = self.scenario.model.actions()
+        power_plant_actions = self.scenario.power_plant.actions()
         
-        turbine_actions = np.array(model_actions.turbine_power())
-        basin_actions = np.array(model_actions.basin_flow_rates())
+        turbine_actions = np.array(power_plant_actions.turbine_power())
+        basin_actions = np.array(power_plant_actions.basin_flow_rates())
         
-        volume = self.scenario.model.basin_volumes()
-        num_states = self.scenario.model.basin_num_states()
-        basins_init_volumes = self.scenario.model.basin_init_volumes()
+        volume = self.scenario.power_plant.basin_volumes()
+        num_states = self.scenario.power_plant.basin_num_states()
+        basins_init_volumes = self.scenario.power_plant.basin_init_volumes()
         
         penalty = self.basin_limit_penalty  
         

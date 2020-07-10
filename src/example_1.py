@@ -44,16 +44,33 @@ turbines = [Turbine('turbine_1',
                     actions=[ActionStanding(), ActionMin(), ActionMax()])
             ]
 
-plant = PowerPlant(basins, turbines)    
+power_plant = PowerPlant(basins, turbines)    
 
-n_steps = 24*7*2
 
+def date_range(start_time, end_time, sampling_time=None):
+    if sampling_time is None:
+        start_time = np.datetime64(start_time)
+        end_time = np.datetime64(end_time)
+    else:
+        start_time = np.datetime64(start_time, sampling_time)
+        end_time = np.datetime64(end_time, sampling_time)
+        
+    return np.arange(start_time, end_time)
+    
+
+start_time = '2020-04-01T00' 
+end_time =  '2020-04-14'
+time = date_range(start_time, end_time)
+
+n_steps = len(time)
 hpfc = 10*(np.sin(2*np.pi*2*np.arange(n_steps)/n_steps) + 1)
-
 inflow = 0.8*np.ones((n_steps,2))
 
-underlyings = Underlyings(hpfc, inflow, 3600)
-scenario = Scenario(plant, underlyings, name='base')
+underlyings = Underlyings(time, hpfc, inflow)
+scenario = Scenario(power_plant, underlyings, name='base')
+
+scenario.power_plant
+
 
 optimizer = ScenarioOptimizer(scenario)
 optimizer.run()
@@ -67,4 +84,4 @@ plt.plot(np.arange(n_steps+1)-1,optimizer.volume, marker='.', label='vol')
 plt.legend()
 plt.show()
 
-print('EURO', np.sum(np.sum(optimizer.turbine_actions, axis=1)*hpfc)/1e6)
+# print('EURO', np.sum(np.sum(optimizer.turbine_actions, axis=1)*hpfc)/1e6)

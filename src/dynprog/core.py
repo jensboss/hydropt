@@ -32,17 +32,13 @@ def transition_matrix(V, num_states, q):
     return L_combined.tocsc()
 
 
-
 def kron_index(num_states, position):
-    index = np.ones(1, dtype=np.int64)
+    n = num_states[position]
+    rep_d1 = np.prod(num_states[0:position], dtype=np.int)
+    rep_d2 = np.prod(num_states[position:], dtype=np.int)//n
     
-    for k, num in enumerate(num_states):
-        if k == position:
-            index = np.kron(index, np.arange(num))
-        else:
-            index = np.kron(index, np.ones(num, dtype=np.int64))
-            
-    return index
+    index_rep = np.tile(np.arange(n), (rep_d2, rep_d1))
+    return index_rep.flatten('F')
 
 
 def kron_indices(num_states, positions):
@@ -57,6 +53,7 @@ def kron_indices(num_states, positions):
 def kron_basis_map(num_states):
     num_states = np.int64(np.round(num_states))
     return np.flip(np.cumprod(np.flip(num_states)))//num_states
+
 
 def kron_action(q, m):
     return [f*np.ones((m,)) for f in q]
@@ -91,9 +88,12 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
                 # L_turbine = trans_matrix(volume, num_states, kron_action(basin_action, num_states_tot))
                 L_turbine = trans_matrix(volume, num_states, basin_action)
                 action_cache[act_index] = L_turbine
+                
             L = L_inflow @ L_turbine
+            
             immediate_reward = np.sum(turbine_action*hpfc_now, axis=0)
             future_reward = L.T.dot(value) 
+            
             # TODO: Normalize penalty
             penatly_reward = penalty*(1-np.sum(L, axis=0))
             

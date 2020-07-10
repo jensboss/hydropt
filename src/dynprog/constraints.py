@@ -9,33 +9,6 @@ Created on Sun Apr 26 12:39:22 2020
 
 import numpy as np
 
-
-
-
-class TimeIndex():
-    def __init__(self, start_time, end_time, ts):
-        self._time_index = None
-        self._time_index_start = start_time
-        self._time_index_end = end_time
-        self._time_index_ts = ts
-    
-    @property
-    def time_index(self):
-        if self._time_index is None:
-            start_time = np.datetime64(self._time_index_start, self._time_index_ts)
-            end_time = np.datetime64(self._time_index_end, self._time_index_ts)
-            sampled_time = np.arange(start_time, end_time)
-            time_index = dict()
-            for k, time_sample in enumerate(sampled_time):
-                time_index[time_sample] = k
-            self._time_index = time_index
-            
-        return self._time_index
-    
-    def __contains__(self, time):
-        return (time in self.time_index)
-
-
 class AbsolutPowerConstraint():
     def __init__(self, turbine, abs_power_min=None, abs_power_max=None):
         self.turbine = turbine
@@ -67,7 +40,7 @@ class AbsolutPowerConstraint():
         return self.__class__(self.turbine, self.abs_power_min, self.abs_power_max)
 
 
-def non_func(a, b, func):
+def none_func(a, b, func):
     if a is not None and b is not None:
         return func(a, b)
     elif a is None and b is not None:
@@ -78,10 +51,10 @@ def non_func(a, b, func):
         return None
     
 def none_min(a, b):
-    return non_func(a, b, min)
+    return none_func(a, b, min)
 
 def none_max(a, b):
-    return non_func(a, b, max)
+    return none_func(a, b, max)
     
 class Constraints():
     def __init__(self, constraints=None):
@@ -100,6 +73,15 @@ class Constraints():
                                                  constraint.abs_power_max)
         else:
             self.constraints[constraint.turbine] = constraint.copy()
+            
+    def __getitem__(self, key):
+        return self.constraints[key]
+        
+    def __eq__(self, other):
+        return list(self.constraints.values()) == list(other.constraints.values())
+    
+    def __hash__(self):
+        return hash(tuple(self.constraints.values()))
         
     def __repr__(self):
          return f"Constraints({list(self.constraints.values())})"
@@ -113,8 +95,8 @@ class ConstrainedInterval():
         self.end_time = np.datetime64(end_time)
         
         if constraint is None:
-            self.constraint = AbsolutPowerConstraint(turbine, 
-                                                     abs_power_min, 
+            self.constraint = AbsolutPowerConstraint(turbine,
+                                                     abs_power_min,
                                                      abs_power_max)
         else:
             self.constraint = constraint
@@ -122,24 +104,24 @@ class ConstrainedInterval():
     def sample_interval(self, sampling_time):
         start_time = np.datetime64(self.start_time, sampling_time)
         end_time = np.datetime64(self.end_time, sampling_time)
-        
         return np.arange(start_time, end_time)
+    
+    def intersect(self, time_range):
+        mask = (self.start_time <= time_range) &  (time_range < self.end_time)
+        return time_range[mask]
         
-
     def __contains__(self, time):
         return self.start_time <= np.datetime64(time) < self.end_time
     
         
 class ConstrainedIntervals():
-    def __init__(self, constrained_intervals):
-        self.constrained_intervals = constrained_intervals
+    def __init__(self, constrained_intervals=None):
+        if constrained_intervals is None:
+            self.constrained_intervals = []
+        else:
+            self.constrained_intervals = constrained_intervals
         
-    def roll_out(self, start_time, end_time, sampling_time):
-        start_time = np.datetime64(start_time, sampling_time)
-        end_time = np.datetime64(end_time, sampling_time)
-        
-        time_range = np.arange(start_time, end_time)
-        
+    def roll_out(self, time_range):
         time_index = dict()
         for k, time in enumerate(time_range):
             time_index[time] = k
@@ -147,64 +129,104 @@ class ConstrainedIntervals():
         rolled_out_constraints = [Constraints() for time in time_range]
         
         for constrainted_interval in self.constrained_intervals:
-            times_constraint = constrainted_interval.sample_interval(sampling_time)
+            times_constraint = constrainted_interval.intersect(time_range)
             for time in times_constraint:
-                k = time_index[time]
-                if rolled_out_constraints[k] is None:
-                    rolled_out_constraints[k] = list()
-                rolled_out_constraints[k].append(constrainted_interval.constraint)
+                ind = time_index[time]
+                rolled_out_constraints[ind].append(constrainted_interval.constraint)
+           
+        constraints_cache = dict() 
+        constraints = dict()
+        constraints_ids = list()
+        ctr = 0
+        for consts in rolled_out_constraints:
+            if not consts in constraints_cache:
+                constraints_cache[consts] = ctr
+                constraints[ctr] = consts
+                ctr += 1
+            constraints_ids.append(constraints_cache[consts])
             
-        return rolled_out_constraints
+        return constraints_ids, constraints
     
     
 if __name__ == '__main__':
     from dynprog.model import Turbine, Basin, Outflow, ActionStanding, \
-        ActionMin, ActionMax
+        ActionMin, ActionMax, PowerPlant
+        
+    from dynprog.scenarios import Scenario, Underlyings
     
     basins = [Basin(name='basin_1', 
-                volume=81, 
-                num_states=81, 
-                init_volume=10, 
-                levels=(2000, 2120)),
-          Basin(name='basin_2', 
-                volume=31, 
-                num_states=41, 
-                init_volume=10, 
-                levels=(1200, 1250))
-          ]
-
+                    volume=81, 
+                    num_states=81, 
+                    init_volume=10, 
+                    levels=(2000, 2120)),
+              Basin(name='basin_2', 
+                    volume=31, 
+                    num_states=41, 
+                    init_volume=10, 
+                    levels=(1200, 1250))
+              ]
+    
     outflow = Outflow(outflow_level=600)
     
     turbines = [Turbine('turbine_1', 
-                    max_power = 33000000.0,
-                    base_load = 10000000.0,
-                    efficiency=0.8, 
-                    upper_basin=basins[0], 
-                    lower_basin=basins[1],
-                    actions=[ActionStanding(), ActionMin(), ActionMax()]),
-            Turbine('turbine_2', 
-                    max_power = 15000000.0,
-                    base_load =  7000000.0,
-                    efficiency=0.8,
-                    upper_basin=basins[1], 
-                    lower_basin=outflow,
-                    actions=[ActionStanding(), ActionMin(), ActionMax()])
-            ]
-
+                        max_power = 33000000.0,
+                        base_load = 10000000.0,
+                        efficiency=0.8, 
+                        upper_basin=basins[0], 
+                        lower_basin=basins[1],
+                        actions=[ActionStanding(), ActionMin(), ActionMax()]),
+                Turbine('turbine_2', 
+                        max_power = 15000000.0,
+                        base_load =  7000000.0,
+                        efficiency=0.8,
+                        upper_basin=basins[1], 
+                        lower_basin=outflow,
+                        actions=[ActionStanding(), ActionMin(), ActionMax()])
+                ]
     
-    constrained_intervals = [ConstrainedInterval('2020-04-27', 
-                                                 '2020-04-28', 
-                                                 turbine=turbines[0],
-                                                 abs_power_max=20e6),
-                             ConstrainedInterval('2020-04-26', 
-                                                 '2020-04-27T05', 
-                                                 turbine=turbines[0],
-                                                 abs_power_min=1.5e6)]
+    power_plant = PowerPlant(basins, turbines)    
     
-    print(constrained_intervals[0].constraint)
     
-    start_time = '2020-04' 
+    def date_range(start_time, end_time, sampling_time=None):
+        if sampling_time is None:
+            start_time = np.datetime64(start_time)
+            end_time = np.datetime64(end_time)
+        else:
+            start_time = np.datetime64(start_time, sampling_time)
+            end_time = np.datetime64(end_time, sampling_time)
+            
+        return np.arange(start_time, end_time)
+        
+    
+    start_time = '2020-04-01T00' 
     end_time =  '2020-05'
-    print(ConstrainedIntervals(constrained_intervals).roll_out(start_time, end_time, 'h'))
+    time = date_range(start_time, end_time)
     
+    n_steps = len(time)
+    hpfc = 10*(np.sin(2*np.pi*2*np.arange(n_steps)/n_steps) + 1)
+    inflow = 0.8*np.ones((n_steps,2))
+    
+    underlyings = Underlyings(time, hpfc, inflow)
+    
+    
+    constrained_intervals = ConstrainedIntervals(
+        [ConstrainedInterval('2020-04-27',
+                             '2020-04-28',
+                             turbine=turbines[0],
+                             abs_power_max=20e6),
+         ConstrainedInterval('2020-04-26',
+                             '2020-04-27T05',
+                             turbine=turbines[0],
+                             abs_power_min=1.5e6)]
+        )
+    
+    constraints_ids, constraints = constrained_intervals.roll_out(time)
+    
+    print(constraints_ids, constraints)
+    
+    scenario = Scenario(power_plant, underlyings, ConstrainedIntervals, name='base')
+    
+    power_plant_actions = scenario.power_plant.actions()
+    
+    print(power_plant_actions.turbine_power(constraints[constraints_ids[0]]))
 

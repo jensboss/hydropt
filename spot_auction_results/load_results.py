@@ -18,6 +18,20 @@ def update_or_insert(df_1, df_2):
     mask =  ~df_concat.index.duplicated(keep='first')
     return df_concat.loc[mask, :]
 
+def read_html(talbe):
+    rows = []
+    columns = []
+    for tr in table.findAll('tr'):
+        row = []
+        for th in tr.findAll('th'):
+            columns.append(th.text)
+        for td in tr.findAll('td'):
+            row.append(td.text.replace(",",""))
+        if row:
+            rows.append(row)
+    
+    return pd.DataFrame(data=rows, columns=columns[-4:]) 
+
 
 market_areas = ['CH', 'DE-LU', 'FR']
 url_temp = ("https://www.epexspot.com/en/market-data?"
@@ -54,16 +68,21 @@ for market_area in market_areas:
         
         soup = BeautifulSoup(response.content, features="lxml")
         table = soup.find("table", attrs={"class": "table-01 table-length-1"})
+        
+        if table is None:
+            continue
 
-        temp = pd.read_html(table.prettify())[0]
-        temp = temp.iloc[:,0:4]
+        temp = read_html(table.prettify())
+        # temp = temp.iloc[:,0:4]
         
         index = pd.date_range(delivery_date, 
                               delivery_date + pd.offsets.Day() - pd.offsets.Hour(), 
                               freq='H')
         temp = temp.set_index(index)
+        temp = temp.astype(float)
         
         df = pd.concat((df, temp), sort=False)
+        
     
     try:
         data_from_file = pd.read_csv(f'results_{ market_area }.csv', 
@@ -75,13 +94,23 @@ for market_area in market_areas:
         
     df = update_or_insert(data_from_file, df)
     
-    df_price = df[['Price  (€/MWh)',]]
+    df_price = df[['Price(€/MWh)',]]
     df_price.columns = ['Price ' + market_area]
     spot_prices = update_or_insert(spot_prices, df_price)
     
     df.to_csv(f'results_{ market_area }.csv', sep=';')
     
 spot_prices.to_csv('spot_data.csv', sep=';')
+
+
+spot_prices.plot()
+
+
+# %%
+
+   
+    
+        
         
 
 
