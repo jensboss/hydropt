@@ -44,7 +44,15 @@ turbines = [Turbine('turbine_1',
                     actions=[ActionStanding(), ActionMin(), ActionMax()])
             ]
 
-power_plant = PowerPlant(basins, turbines)    
+actions = [ActionStanding(turbines[0]), 
+           ActionMin(turbines[0]),
+           ActionMax(turbines[0]),
+           ActionStanding(turbines[1]), 
+           ActionMin(turbines[1]),
+           ActionMax(turbines[1])
+           ]
+
+power_plant = PowerPlant(basins, turbines, actions)    
 
 
 def date_range(start_time, end_time, sampling_time=None):

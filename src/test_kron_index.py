@@ -43,4 +43,4 @@ if __name__ == '__main__':
     print('time new kron_index (in sec):', t)
     
     t = timeit.timeit(lambda: kron_index_ref(num_states, position), number=100)
-    print('time new kron_index (in sec):', t)
+    print('time ref kron_index (in sec):', t)

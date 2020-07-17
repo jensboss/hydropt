@@ -61,6 +61,39 @@ def kron_action(q, m):
 
 def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actions,
                        inflow, hpfc, water_value_end, penalty):
+    """
+    
+
+    Parameters
+    ----------
+    n_steps : int
+        Number of time step.
+    volume : numpy.array
+        Volume for each basin.
+    num_states : numpy.array
+        Number of states for each basin.
+    turbine_actions : numpy.array
+        (n_actions, n_basins, n_kron_states).
+    basin_actions : numpy.array
+        (n_actions, n_basins, n_kron_states).
+    inflow : TYPE
+        DESCRIPTION.
+    hpfc : TYPE
+        DESCRIPTION.
+    water_value_end : TYPE
+        DESCRIPTION.
+    penalty : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    action_grid : TYPE
+        DESCRIPTION.
+    value_grid : TYPE
+        DESCRIPTION.
+
+    """
+    
     num_states_tot = np.prod(num_states)
     
     # initialize boundary condition (valuation of states at the end of optimization)
@@ -130,36 +163,40 @@ def forward_propagation(n_steps, volume, num_states, basins_contents, turbine_ac
     return turbine_actions_taken, basin_actions_taken, vol
 
 
-def transition_coo_matrix_params(vols, num_states, q, basin_index):
+def transition_coo_matrix_params(vol, num_states, q, basin_index):
 
     def valid_index_mask(i, num_states):
         not_too_large = i < num_states
         not_too_small = i >= 0
         return not_too_large & not_too_small
         
+    # number of product states
     m = np.prod(num_states)
+    # range of product space indices
     j = np.arange(m)
-    
-    dvols = vols/(num_states[basin_index]-1)
-    
+    # volume defference between states for this basin
+    dvols = vol/(num_states[basin_index]-1)
+    # index step between different indices for this basin in kron matrix
     basis_map = kron_basis_map(num_states)[basin_index]
-    
+    # state indices for this basin in kron space
     index = kron_index(num_states, basin_index)
-    
+    # compute state indices change (interpolate -> floor/ceil)
     dk_floor = np.int64(q/dvols)
     dk_ceil = np.int64(dk_floor + np.sign(q))
+    # compute target state indices (basin state index)
     k_floor = index - dk_floor
     k_ceil =  index - dk_ceil
-    
+    # make sure new indices are not out of bound
     valid_floor = valid_index_mask(k_floor, num_states[basin_index])
     valid_ceil = valid_index_mask(k_ceil, num_states[basin_index])
-    
+    # compute target product state indices
     i_floor = j-dk_floor*basis_map
     i_ceil = j-dk_ceil*basis_map
-    
+    # compute weights
     p_ceil = (np.abs(q) % dvols)/dvols
     p_floor = 1 - p_ceil
     
+    # prepare return
     data = np.concatenate((p_floor[valid_floor],
                            p_ceil[valid_ceil]))
     

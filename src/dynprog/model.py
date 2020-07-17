@@ -219,19 +219,19 @@ class Turbine():
         
         self.efficiency = efficiency
         
-        self._actions = []
-        if actions is not None:
-            self.actions = actions
+    #     self._actions = []
+    #     if actions is not None:
+    #         self.actions = actions
         
-    @property
-    def actions(self):
-        return self._actions
+    # @property
+    # def actions(self):
+    #     return self._actions
     
-    @actions.setter
-    def actions(self, actions):
-        for action in actions:
-            action.turbine = self
-        self._actions = actions
+    # @actions.setter
+    # def actions(self, actions):
+    #     for action in actions:
+    #         action.turbine = self
+    #     self._actions = actions
     
     def head(self):
         return self.upper_basin.kron_levels() - self.lower_basin.kron_levels()
@@ -248,11 +248,12 @@ class Turbine():
 
     
 class PowerPlant():
-    def __init__(self, basins=None, turbines=None, constraints=None):
+    def __init__(self, basins=None, turbines=None, actions=None, constraints=None):
         self._basins = []
         self._basin_index = {}
         self.add_basins(basins)      
         self.turbines = turbines
+        self._actions = actions
         self.constraints = constraints
         
     @property
@@ -286,7 +287,7 @@ class PowerPlant():
     def turbine_actions(self):
         actions = list()
         for turbine in self.turbines:
-            actions.append(turbine.actions)
+            actions.append([a for a in self._actions if a.turbine is turbine])
         return actions
         
     def actions(self):
