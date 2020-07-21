@@ -210,7 +210,7 @@ class PowerPlantActions():
         
 class Turbine():
     def __init__(self, name, max_power, base_load, 
-                 upper_basin, lower_basin, efficiency, actions=None):
+                 upper_basin, lower_basin, efficiency):
         self.name = name
         self.max_power = max_power
         self.base_load = base_load
@@ -218,20 +218,6 @@ class Turbine():
         self.lower_basin = lower_basin
         
         self.efficiency = efficiency
-        
-    #     self._actions = []
-    #     if actions is not None:
-    #         self.actions = actions
-        
-    # @property
-    # def actions(self):
-    #     return self._actions
-    
-    # @actions.setter
-    # def actions(self, actions):
-    #     for action in actions:
-    #         action.turbine = self
-    #     self._actions = actions
     
     def head(self):
         return self.upper_basin.kron_levels() - self.lower_basin.kron_levels()

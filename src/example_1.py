@@ -33,15 +33,13 @@ turbines = [Turbine('turbine_1',
                     base_load = 10000000.0,
                     efficiency=0.8, 
                     upper_basin=basins[0], 
-                    lower_basin=basins[1],
-                    actions=[ActionStanding(), ActionMin(), ActionMax()]),
+                    lower_basin=basins[1]),
             Turbine('turbine_2', 
                     max_power = 15000000.0,
                     base_load =  7000000.0,
                     efficiency=0.8,
                     upper_basin=basins[1], 
-                    lower_basin=outflow,
-                    actions=[ActionStanding(), ActionMin(), ActionMax()])
+                    lower_basin=outflow)
             ]
 
 actions = [ActionStanding(turbines[0]), 
@@ -67,7 +65,7 @@ def date_range(start_time, end_time, sampling_time=None):
     
 
 start_time = '2020-04-01T00' 
-end_time =  '2020-04-14'
+end_time =  '2020-11-01'
 time = date_range(start_time, end_time)
 
 n_steps = len(time)
