@@ -8,6 +8,7 @@ Created on Tue Jul 21 20:47:27 2020
 
 import numpy as np
 
+            
 class BaseAction():
     def __init__(self, turbine=None):
         self.turbine = turbine

@@ -13,7 +13,9 @@ from dynprog.action import PowerPlantActions, PowerPlantAction
 
 
 class BasinLevels():
-    def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None):
+    def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None, 
+                 default_model='wedge'):
+        
         self.basin = basin
         self.empty = empty
         
@@ -22,15 +24,46 @@ class BasinLevels():
         else:
             self.full = full
             
-        self.vol_to_level_lut = vol_to_level_lut
+        if vol_to_level_lut is None:
+            self.vol_to_level_lut = self.compute_vol_to_level_lut(default_model)
+        else:
+            self.vol_to_level_lut = vol_to_level_lut
         
-        self._values = None
+        
+    def compute_vol_to_level_lut(self, model='wedge'):
+        
+        vols = np.linspace(0, self.basin.volume, self.basin.num_states)
+        
+        if model == 'wedge':
+            
+            if self.empty < self.full:
+                
+                height = self.full - self.empty
+                A = height**2 # width = 2*height
+                length = self.basin.volume/A
+                
+                levels = np.sqrt(vols/length)+self.empty
+                
+            else:
+                levels = self.empty*np.ones(self.basin.num_states)
+                
+            
+        else:
+            raise ValueError(f"Model '{model}' not implemented. "
+                             "Choose from the following models['wegde', ]")
+            
+        return np.stack((vols, levels)).T
         
     @property
     def values(self):
-        if self._values is None and self.vol_to_level_lut is None:
-            self._values = np.linspace(self.empty, self.full, self.basin.num_states)
-        return self._values
+            
+        vols = np.linspace(0, self.basin.volume, self.basin.num_states)
+        
+        vols_p = self.vol_to_level_lut[:,0]
+        levels_p = self.vol_to_level_lut[:,1]
+        
+        return np.interp(vols, vols_p, levels_p)
+        
 
 
 class Basin():
