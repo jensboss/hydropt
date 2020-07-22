@@ -9,8 +9,8 @@ Created on Mon Apr 20 16:13:07 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dynprog.model import Basin, Outflow, Turbine, PowerPlant, ActionStanding, \
-    ActionMin, ActionMax
+from dynprog.model import Basin, Outflow, Turbine, PowerPlant
+from dynprog.action import ActionStanding, ActionPowerMin, ActionPowerMax
 from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 
@@ -43,11 +43,11 @@ turbines = [Turbine('turbine_1',
             ]
 
 actions = [ActionStanding(turbines[0]), 
-           ActionMin(turbines[0]),
-           ActionMax(turbines[0]),
+           ActionPowerMin(turbines[0]),
+           ActionPowerMax(turbines[0]),
            ActionStanding(turbines[1]), 
-           ActionMin(turbines[1]),
-           ActionMax(turbines[1])
+           ActionPowerMin(turbines[1]),
+           ActionPowerMax(turbines[1])
            ]
 
 power_plant = PowerPlant(basins, turbines, actions)    
@@ -65,7 +65,7 @@ def date_range(start_time, end_time, sampling_time=None):
     
 
 start_time = '2020-04-01T00' 
-end_time =  '2020-11-01'
+end_time =  '2020-04-15'
 time = date_range(start_time, end_time)
 
 n_steps = len(time)

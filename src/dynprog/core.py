@@ -9,6 +9,8 @@ Created on Thu Apr  9 17:14:02 2020
 import numpy as np
 import scipy.sparse as sparse
 
+
+
 def transition_prob(V, num_states, q):
     if q == 0:
         return ([1.0, ], [0, ])
@@ -163,13 +165,9 @@ def forward_propagation(n_steps, volume, num_states, basins_contents, turbine_ac
     return turbine_actions_taken, basin_actions_taken, vol
 
 
+    
 def transition_coo_matrix_params(vol, num_states, q, basin_index):
-
-    def valid_index_mask(i, num_states):
-        not_too_large = i < num_states
-        not_too_small = i >= 0
-        return not_too_large & not_too_small
-        
+ 
     # number of product states
     m = np.prod(num_states)
     # range of product space indices
@@ -187,8 +185,10 @@ def transition_coo_matrix_params(vol, num_states, q, basin_index):
     k_floor = index - dk_floor
     k_ceil =  index - dk_ceil
     # make sure new indices are not out of bound
-    valid_floor = valid_index_mask(k_floor, num_states[basin_index])
-    valid_ceil = valid_index_mask(k_ceil, num_states[basin_index])
+    # valid_floor = valid_index_mask(k_floor, num_states[basin_index])
+    valid_floor = (k_floor < num_states[basin_index]) & (k_floor >= 0)
+    valid_ceil = (k_ceil < num_states[basin_index]) & (k_ceil >= 0)
+    # valid_ceil = valid_index_mask(k_ceil, num_states[basin_index])
     # compute target product state indices
     i_floor = j-dk_floor*basis_map
     i_ceil = j-dk_ceil*basis_map

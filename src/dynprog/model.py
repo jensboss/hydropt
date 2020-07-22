@@ -9,7 +9,7 @@ Created on Thu Apr  9 17:14:02 2020
 import numpy as np
 
 from dynprog.core import kron_index, kron_indices
-
+from dynprog.action import PowerPlantActions, PowerPlantAction
 
 
 class BasinLevels():
@@ -84,128 +84,6 @@ class Outflow(Basin):
         super().__init__(volume=1, num_states=2, init_volume=0, levels=outflow_level, name=name)
         
 
-class BaseAction():
-    def __init__(self, turbine=None):
-        self.turbine = turbine
-        
-    def turbine_power(self, constraints=None):
-        raise NotImplementedError
-        
-    def flow_rates(self, constraints=None):
-        raise NotImplementedError
-        
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.turbine})"
-
-
-class ActionPowerFixed(BaseAction):
-    def __init__(self, power, turbine=None):
-        super().__init__(turbine)
-        self.power = power
-        
-    def turbine_power(self, constraints=None):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.power*np.ones((num_plant_states,))
-    
-    def flow_rates(self, constraints=None):
-        return self.turbine.flow_rate(self.power)
-    
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.turbine}, power={self.power})"
-
-    
-class ActionFlowRateFixed(BaseAction):
-    def __init__(self, flow_rate, turbine=None):
-        super().__init__(turbine)
-        self.flow_rate = flow_rate
-        
-    def turbine_power(self, constraints=None):
-        return self.turbine.power(self.flow_rate)
-    
-    def flow_rates(self, constraints=None):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.flow_rate*np.ones((num_plant_states,))
-        
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.turbine}, flow_rate={self.flow_rate})"
-
-    
-class ActionStanding(ActionFlowRateFixed):
-    def __init__(self, turbine=None):
-        super().__init__(0.0, turbine)
-        
-        
-class ActionMin(BaseAction):
-    def __init__(self, turbine=None):
-        super().__init__(turbine)
-        
-    def turbine_power(self, constraints=None):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.turbine.base_load*np.ones((num_plant_states,))
-    
-    def flow_rates(self, constraints=None):
-        return self.turbine.flow_rate(self.turbine.base_load)
-
-        
-class ActionMax(BaseAction):
-    def __init__(self, turbine=None):
-        super().__init__(turbine)
-        
-    def turbine_power(self, constraints=None):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.turbine.max_power*np.ones((num_plant_states,))
-    
-    def flow_rates(self, constraints=None):
-        return self.turbine.flow_rate(self.turbine.max_power)
-    
-
-class PowerPlantAction():
-    def __init__(self, actions, power_plant=None):
-        self.actions = tuple(actions)
-        self.power_plant = power_plant
-        
-    def turbine_power(self, constraints=None):
-        return [action.turbine_power(constraints) for action in self.actions]
-    
-    def basin_flow_rates(self, constraints=None):
-        basins = self.power_plant.basins
-        basin_flow_rates = len(basins)*[0]
-        for action in self.actions:
-            outflow_ind = action.turbine.upper_basin.index()
-            if outflow_ind is not None:
-                basin_flow_rates[outflow_ind] += action.flow_rates(constraints)
-            inflow_ind = action.turbine.lower_basin.index()
-            if inflow_ind is not None:
-                basin_flow_rates[inflow_ind] -= action.flow_rates(constraints)
-                
-        return basin_flow_rates
-        
-    def __len__(self):
-        return len(self.actions)
-    
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.actions})"
-    
-    
-class PowerPlantActions():
-    def __init__(self, power_plant_actions):
-        self.power_plant_actions = power_plant_actions
-        
-    def turbine_power(self, constraints=None):
-        return [power_plant_action.turbine_power(constraints) 
-                for power_plant_action in self.power_plant_actions]
-        
-    
-    def basin_flow_rates(self, constraints=None):
-        return [power_plant_action.basin_flow_rates(constraints) 
-                for power_plant_action in self.power_plant_actions]
-    
-    def __len__(self):
-        return len(self.power_plant_actions)
-    
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.power_plant_actions})"
-        
 
         
 class Turbine():
