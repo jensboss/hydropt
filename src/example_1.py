@@ -15,28 +15,28 @@ from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
 
 
 basins = [Basin(name='basin_1', 
-                volume=81, 
+                volume=81*3600, 
                 num_states=81, 
-                init_volume=10, 
+                init_volume=10*3600, 
                 levels=(2000, 2120)),
           Basin(name='basin_2', 
-                volume=31, 
+                volume=31*3600, 
                 num_states=41, 
-                init_volume=10, 
+                init_volume=10*3600, 
                 levels=(1200, 1250))
           ]
 
 outflow = Outflow(outflow_level=600)
 
 turbines = [Turbine('turbine_1', 
-                    max_power = 33000000.0,
-                    base_load = 10000000.0,
+                    max_power = 33e6,
+                    base_load = 10e6,
                     efficiency=0.8, 
                     upper_basin=basins[0], 
                     lower_basin=basins[1]),
             Turbine('turbine_2', 
-                    max_power = 15000000.0,
-                    base_load =  7000000.0,
+                    max_power = 15e6,
+                    base_load =  7e6,
                     efficiency=0.8,
                     upper_basin=basins[1], 
                     lower_basin=outflow)
@@ -65,7 +65,7 @@ def date_range(start_time, end_time, sampling_time=None):
     
 
 start_time = '2020-04-01T00' 
-end_time =  '2020-04-15'
+end_time =  '2020-04-10'
 time = date_range(start_time, end_time)
 
 n_steps = len(time)
@@ -75,18 +75,16 @@ inflow = 0.8*np.ones((n_steps,2))
 underlyings = Underlyings(time, hpfc, inflow)
 scenario = Scenario(power_plant, underlyings, name='base')
 
-scenario.power_plant
-
 
 optimizer = ScenarioOptimizer(scenario)
 optimizer.run()
 
-plt.figure(2)
+plt.figure(3)
 plt.clf()
 plt.plot(hpfc, marker='.', label='hpfc')
 plt.plot(10*inflow, marker='.', label='inflow')
 plt.plot(optimizer.turbine_actions/1e6, marker='.', label='action')
-plt.plot(np.arange(n_steps+1)-1,optimizer.volume, marker='.', label='vol')
+plt.plot(np.arange(n_steps+1)-1,optimizer.volume/dt, marker='.', label='vol')
 plt.legend()
 plt.show()
 

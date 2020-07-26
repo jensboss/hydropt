@@ -22,6 +22,9 @@ class Underlyings():
     def n_steps(self):
         return self.time.shape[0]
     
+    def dt(self):
+        return (self.time[1]-self.time[0]) / np.timedelta64(1, 's')
+    
         
 class Scenario():
     def __init__(self, power_plant, underlyings, constraints=None, water_value_end=0, name=None):
@@ -38,7 +41,7 @@ class Scenario():
         
         
 class ScenarioOptimizer():
-    def __init__(self, scenario=None, basin_limit_penalty=1e14):
+    def __init__(self, scenario=None, basin_limit_penalty=1e14*3600):
         self.scenario = scenario
         self.basin_limit_penalty = basin_limit_penalty
         self.action_grid = None
@@ -49,13 +52,14 @@ class ScenarioOptimizer():
         
     def run(self):
         n_steps = self.scenario.underlyings.n_steps()
+        dt = self.scenario.underlyings.dt()
         price_curve = self.scenario.underlyings.price_curve
-        inflow = self.scenario.underlyings.inflow
+        inflow = self.scenario.underlyings.inflow*dt
         
         power_plant_actions = self.scenario.power_plant.actions()
         
         turbine_actions = np.array(power_plant_actions.turbine_power())
-        basin_actions = np.array(power_plant_actions.basin_flow_rates())
+        basin_actions = np.array(power_plant_actions.basin_flow_rates())*dt
         
         volume = self.scenario.power_plant.basin_volumes()
         num_states = self.scenario.power_plant.basin_num_states()

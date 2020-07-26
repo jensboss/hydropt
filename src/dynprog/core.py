@@ -61,8 +61,13 @@ def kron_action(q, m):
     return [f*np.ones((m,)) for f in q]
 
 
+class CoreAction():
+    def __init__(self, turbine_action, basin_action):
+        self.turbine_action = turbine_action
+        self.basin_action = basin_action
+
 def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actions,
-                       inflow, hpfc, water_value_end, penalty):
+                       inflows, prices, water_value_end, penalty):
     """
     
 
@@ -109,13 +114,15 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
     value_grid = np.zeros((n_steps,num_states_tot))
     action_cache = dict()
     
-    # loop backwords through time (backward induction)
-    for k in np.arange(n_steps):
-        hpfc_now = hpfc[(n_steps-1)-k]
-        inflow_now = inflow[(n_steps-1)-k, :]
-        L_inflow = transition_matrix(volume, num_states, -inflow_now)
-        # loop through all actions and every state
+    # loop backwards through time (backward induction)
+    for backward_step_index in np.flip(np.arange(n_steps)):
+        price = prices[backward_step_index]
+        inflow = inflows[backward_step_index, :]
         
+        # compute inflow transition matrix, which changes only with time
+        L_inflow = transition_matrix(volume, num_states, -inflow)
+        
+        # loop through all actions and every state
         for act_index, (turbine_action, basin_action) in enumerate(zip(turbine_actions, basin_actions)):
             if act_index in action_cache:
                 L_turbine = action_cache[act_index]
@@ -126,7 +133,7 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
                 
             L = L_inflow @ L_turbine
             
-            immediate_reward = np.sum(turbine_action*hpfc_now, axis=0)
+            immediate_reward = np.sum(turbine_action*price, axis=0)
             future_reward = L.T.dot(value) 
             
             # TODO: Normalize penalty
@@ -141,8 +148,8 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
         value = rewards_to_evaluate[optimal_action_index, np.arange(num_states_tot)]
         
         # fill action and value grids
-        action_grid[(n_steps-1)-k, :] = optimal_action_index
-        value_grid[(n_steps-1)-k, :] = value
+        action_grid[backward_step_index, :] = optimal_action_index
+        value_grid[backward_step_index, :] = value
     
     return action_grid, value_grid
 
@@ -157,9 +164,18 @@ def forward_propagation(n_steps, volume, num_states, basins_contents, turbine_ac
     state_finder = kron_basis_map(num_states)
     
     for k in np.arange(n_steps):
+        # print(np.int64(np.round((num_states-1)*vol[k, :]/volume)))
         state_index = np.dot(state_finder, np.int64(np.round((num_states-1)*vol[k, :]/volume)))
-        basin_actions_taken[k] = basin_actions[action_grid[k, state_index]][:,state_index]
-        turbine_actions_taken[k] = turbine_actions[action_grid[k, state_index]][:,state_index]
+        try:
+            basin_actions_taken[k] = basin_actions[action_grid[k, state_index]][:,state_index]
+        except IndexError as e:
+            print(e)
+            
+        try:     
+            turbine_actions_taken[k] = turbine_actions[action_grid[k, state_index]][:,state_index]
+        except IndexError as e:
+            print(e)
+            
         vol[k+1, :] = vol[k,:] - basin_actions_taken[k, :] + inflow[k, :]
         
     return turbine_actions_taken, basin_actions_taken, vol
