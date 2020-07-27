@@ -23,7 +23,7 @@ def transition_prob(V, num_states, q):
         return ([p_0, p_1], [k_0, k_1])
 
 
-def transition_matrix(V, num_states, q):
+def simple_trans_matrix(V, num_states, q):
     L_combined = sparse.dia_matrix(np.ones((1,1)))
     for k in np.arange(V.shape[0]):
         # state with index 0 represents empty basin
@@ -57,14 +57,28 @@ def kron_basis_map(num_states):
     return np.flip(np.cumprod(np.flip(num_states)))//num_states
 
 
-def kron_action(q, m):
-    return [f*np.ones((m,)) for f in q]
+# def kron_action(q, m):
+#     return [f*np.ones((m,)) for f in q]
 
 
 class CoreAction():
-    def __init__(self, turbine_action, basin_action):
+    def __init__(self, turbine_action, basin_action, volumes, num_states):
+        
         self.turbine_action = turbine_action
         self.basin_action = basin_action
+        
+        self.volumes = volumes
+        self.num_states = num_states
+        
+        self._trans_matrix = None
+        
+    def trans_matrix(self):
+        
+        if self._trans_matrix is None:
+            self._trans_matrix = trans_matrix(self.volumes, self.num_states, self.basin_action)
+        
+        return self._trans_matrix
+        
 
 def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actions,
                        inflows, prices, water_value_end, penalty):
@@ -112,34 +126,34 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
     rewards_to_evaluate = np.zeros((turbine_actions.shape[0], num_states_tot))
     action_grid = np.zeros((n_steps, num_states_tot), dtype=np.int64)
     value_grid = np.zeros((n_steps,num_states_tot))
-    action_cache = dict()
+    
+    # make core actions
+    actions = []
+    for (turbine_action, basin_action) in zip(turbine_actions, basin_actions):
+        actions.append(CoreAction(turbine_action, basin_action, volume, num_states))
+        
+    action_series = n_steps*[actions, ]
     
     # loop backwards through time (backward induction)
     for backward_step_index in np.flip(np.arange(n_steps)):
         price = prices[backward_step_index]
         inflow = inflows[backward_step_index, :]
+        actions = action_series[backward_step_index]
         
         # compute inflow transition matrix, which changes only with time
-        L_inflow = transition_matrix(volume, num_states, -inflow)
+        L_inflow = simple_trans_matrix(volume, num_states, -inflow)
         
-        # loop through all actions and every state
-        for act_index, (turbine_action, basin_action) in enumerate(zip(turbine_actions, basin_actions)):
-            if act_index in action_cache:
-                L_turbine = action_cache[act_index]
-            else:    
-                # L_turbine = trans_matrix(volume, num_states, kron_action(basin_action, num_states_tot))
-                L_turbine = trans_matrix(volume, num_states, basin_action)
-                action_cache[act_index] = L_turbine
+        for action_index, action in enumerate(actions):
                 
-            L = L_inflow @ L_turbine
+            L = L_inflow @ action.trans_matrix()
             
-            immediate_reward = np.sum(turbine_action*price, axis=0)
+            immediate_reward = np.sum(action.turbine_action*price, axis=0)
             future_reward = L.T.dot(value) 
             
             # TODO: Normalize penalty
             penatly_reward = penalty*(1-np.sum(L, axis=0))
             
-            rewards_to_evaluate[act_index, :] = future_reward + immediate_reward - penatly_reward
+            rewards_to_evaluate[action_index, :] = future_reward + immediate_reward - penatly_reward
 
         # find index of optimal action for each state
         optimal_action_index = np.argmax(rewards_to_evaluate, axis=0)
@@ -201,10 +215,8 @@ def transition_coo_matrix_params(vol, num_states, q, basin_index):
     k_floor = index - dk_floor
     k_ceil =  index - dk_ceil
     # make sure new indices are not out of bound
-    # valid_floor = valid_index_mask(k_floor, num_states[basin_index])
     valid_floor = (k_floor < num_states[basin_index]) & (k_floor >= 0)
     valid_ceil = (k_ceil < num_states[basin_index]) & (k_ceil >= 0)
-    # valid_ceil = valid_index_mask(k_ceil, num_states[basin_index])
     # compute target product state indices
     i_floor = j-dk_floor*basis_map
     i_ceil = j-dk_ceil*basis_map
