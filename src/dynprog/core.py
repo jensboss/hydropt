@@ -224,6 +224,8 @@ def transition_coo_matrix_params(vol, num_states, q, basin_index):
     p_ceil = (np.abs(q) % dvols)/dvols
     p_floor = 1 - p_ceil
     
+    # ! duplicates are ok because their get summed up!
+    
     # prepare return
     data = np.concatenate((p_floor[valid_floor],
                            p_ceil[valid_ceil]))
