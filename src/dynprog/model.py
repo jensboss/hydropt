@@ -14,7 +14,7 @@ from dynprog.action import PowerPlantActions, PowerPlantAction
 
 class BasinLevels():
     def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None, 
-                 default_model='wedge'):
+                 basin_shape='wedge'):
         
         self.basin = basin
         self.empty = empty
@@ -25,16 +25,16 @@ class BasinLevels():
             self.full = full
             
         if vol_to_level_lut is None:
-            self.vol_to_level_lut = self.compute_vol_to_level_lut(default_model)
+            self.vol_to_level_lut = self.compute_vol_to_level_lut(basin_shape)
         else:
             self.vol_to_level_lut = vol_to_level_lut
         
         
-    def compute_vol_to_level_lut(self, model='wedge'):
+    def compute_vol_to_level_lut(self, basin_shape='wedge'):
         
         vols = np.linspace(0, self.basin.volume, self.basin.num_states)
         
-        if model == 'wedge':
+        if basin_shape == 'wedge':
             
             if self.empty < self.full:
                 
@@ -49,8 +49,8 @@ class BasinLevels():
                 
             
         else:
-            raise ValueError(f"Model '{model}' not implemented. "
-                             "Choose from the following models['wegde', ]")
+            raise ValueError(f"Basin shape '{basin_shape}' not implemented. "
+                             "Choose from the following models ['wegde', ]")
             
         return np.stack((vols, levels)).T
         
