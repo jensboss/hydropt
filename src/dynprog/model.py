@@ -67,7 +67,7 @@ class BasinLevels():
 
 
 class Basin():
-    def __init__(self, volume, num_states, init_volume, levels, name=None, power_plant=None):
+    def __init__(self, name, volume, num_states, init_volume, levels, power_plant=None):
         self.name = name
         self.volume = volume
         self.num_states = num_states
@@ -107,9 +107,7 @@ class Basin():
             return self._levels.values[kron_index(basin_num_states, index)]
         
     def __repr__(self):
-        if self.name is None:
-            name = f'basin_{self.index()}'
-        return f"Basin('{name}', {self.volume}, {self.num_states})"
+        return f"Basin('{self.name}')"
 
     
 class Outflow(Basin):
