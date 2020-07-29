@@ -24,7 +24,15 @@ class BaseAction():
     
 
 class ActionPower(BaseAction):
-    pass
+    def constrain_power(self, constraints, power):
+        
+        if constraints is not None and self.turbine in constraints:
+            constraint = constraints[self.turbine]
+            constrained_power = constraint.transform(power)
+        else:    
+            constrained_power = power
+            
+        return constrained_power
 
 
 class ActionPowerFixed(ActionPower):
@@ -33,8 +41,11 @@ class ActionPowerFixed(ActionPower):
         self.power = power
         
     def turbine_power(self, constraints=None):
+        
+        power = self.constrain_power(constraints, self.power)
+        
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.power*np.ones((num_plant_states,))
+        return power*np.ones((num_plant_states,))
     
     def flow_rates(self, constraints=None):
         return self.turbine.flow_rate(self.power)
@@ -53,11 +64,19 @@ class ActionPowerMin(ActionPower):
         super().__init__(turbine)
         
     def turbine_power(self, constraints=None):
+        
+        power_min = self.constrain_power(constraints, 
+                                               self.turbine.base_load)
+            
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.turbine.base_load*np.ones((num_plant_states,))
+        return power_min*np.ones((num_plant_states,))
     
     def flow_rates(self, constraints=None):
-        return self.turbine.flow_rate(self.turbine.base_load)
+        
+        power_min = self.constrain_power(constraints, 
+                                               self.turbine.base_load)
+        
+        return self.turbine.flow_rate(power_min)
     
 
 class ActionPowerMax(ActionPower):
@@ -65,11 +84,19 @@ class ActionPowerMax(ActionPower):
         super().__init__(turbine)
         
     def turbine_power(self, constraints=None):
+        
+        power_max = self.constrain_power(constraints, 
+                                               self.turbine.max_power)
+            
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.turbine.max_power*np.ones((num_plant_states,))
+        return power_max*np.ones((num_plant_states,))
     
     def flow_rates(self, constraints=None):
-        return self.turbine.flow_rate(self.turbine.max_power)
+        
+        power_max = self.constrain_power(constraints, 
+                                               self.turbine.max_power)
+        
+        return self.turbine.flow_rate(power_max)
 
 
 

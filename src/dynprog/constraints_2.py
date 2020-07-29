@@ -38,8 +38,8 @@ def maximum(a, b):
 
 class TurbineConstraint():
     def __init__(self, turbine, time_start, time_end, name='', 
-                 power_max=None, power_min=None, 
-                 margin_max=None, margin_min=None):
+                 power_max=np.inf, power_min=-np.inf, 
+                 margin_max=-0, margin_min=0):
         
         self.turbine = turbine
         self.time_start = np.datetime64(time_start)
@@ -52,29 +52,45 @@ class TurbineConstraint():
         self.margin_max = margin_max
         self.margin_min = margin_min
         
-    def update(self, other):
+        self.validate()
         
-        if isinstance(other, self.__class__):
-            if not self.turbine == other.turbine:
-                raise ValueError('Turbines not match.')
-            other = tuple(other)[1:]
-            
-        self.power_max = minimum(self.power_max, other[0])
-        self.power_min = maximum(self.power_min, other[1])
+    def upper_bound(self):
+        return minimum(self.power_max, self.turbine.max_power) + self.margin_max
+    
+    def lower_bound(self):
+        return maximum(self.power_min, self.turbine.base_load) + self.margin_min
         
-        self.margin_max = minimum(self.margin_max, other[2])
-        self.margin_min = maximum(self.margin_min, other[3])
+    def validate(self):
+        
+        if self.upper_bound() < self.lower_bound():
+            raise ValueError("Constraint ill defined.")
+        
+    def update(self, power_max=None, power_min=None,
+               margin_max=None, margin_min=None):
+        
+        if power_max is not None:
+            self.power_max = power_max
             
+        if power_min is not None:
+            self.power_min = maximum(self.power_min, power_min)
+        
+        if margin_max is not None:
+            self.margin_max = minimum(self.margin_max, margin_max)
+            
+        if margin_min is not None:
+            self.margin_min = maximum(self.margin_min, margin_min)
+        
+        self.validate()
+        
+    def transform(self, power):
+        return minimum(maximum(power, self.lower_bound()), self.upper_bound())
         
     def __add__(self, other):
         if self.turbine is not other.turbine:
             raise ValueError("Cannot sum constraints of different turbines. "
                              f"{self.turbine}, {other.turbine}")
-            
-        if self.name and other.name:
-            name = '+'.join((self.name,other.name))
-        else:
-            name = ''
+        
+        name = '+'.join((self.name,other.name))
             
         time_start = maximum(self.time_start, other.time_start)
         time_end = minimum(self.time_end, other.time_end)
@@ -188,15 +204,17 @@ if __name__ == '__main__':
                    TurbineConstraint(turbines[0], '2020-07-29T01', '2020-07-29T03',
                                      name='test_1', margin_max=-4), 
                    TurbineConstraint(turbines[1], '2020-07-29T02', '2020-07-29T03',
-                                     name='test_2', margin_max=-4)
+                                     name='test_2', margin_min=+2e6)
                    ]
     
     start_time = np.datetime64('2020-07-28T23')
     end_time =  np.datetime64('2020-07-29T05')
     
-    series =  make_constraint_series(start_time, end_time, constraints)
+    constraint_series =  make_constraint_series(start_time, end_time, constraints)
         
-    print(series)
+    turbine_power = pp_actions[1].turbine_power(constraint_series[3])
+    
+    print(turbine_power)
                 
             
             
