@@ -9,7 +9,7 @@ Created on Wed Apr 15 14:06:02 2020
 import numpy as np
 import time
 
-from dynprog.core import backward_induction, forward_propagation
+from dynprog.core import backward_induction, forward_propagation, CoreAction
 from dynprog.constraints import ConstrainedIntervals
 
 
@@ -70,8 +70,16 @@ class ScenarioOptimizer():
         water_value_end = self.scenario.water_value_end
         
         t_start = time.time()
+        
+        # make core actions
+        actions = []
+        for (turbine_action, basin_action) in zip(turbine_actions, basin_actions):
+            actions.append(CoreAction(turbine_action, basin_action, volume, num_states))
+            
+        action_series = n_steps*[actions, ]
+        
         action_grid, value_grid = backward_induction(n_steps, volume, num_states, 
-                                                      turbine_actions, basin_actions, inflow, 
+                                                      action_series, inflow, 
                                                       price_curve, water_value_end, penalty)
         t_end = time.time()
         print(t_end-t_start)

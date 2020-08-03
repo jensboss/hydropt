@@ -80,40 +80,9 @@ class CoreAction():
         return self._trans_matrix
         
 
-def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actions,
+def backward_induction(n_steps, volume, num_states, action_series,
                        inflows, prices, water_value_end, penalty):
-    """
-    
-
-    Parameters
-    ----------
-    n_steps : int
-        Number of time step.
-    volume : numpy.array
-        Volume for each basin.
-    num_states : numpy.array
-        Number of states for each basin.
-    turbine_actions : numpy.array
-        (n_actions, n_basins, n_kron_states).
-    basin_actions : numpy.array
-        (n_actions, n_basins, n_kron_states).
-    inflow : TYPE
-        DESCRIPTION.
-    hpfc : TYPE
-        DESCRIPTION.
-    water_value_end : TYPE
-        DESCRIPTION.
-    penalty : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    action_grid : TYPE
-        DESCRIPTION.
-    value_grid : TYPE
-        DESCRIPTION.
-
-    """
+   
     
     num_states_tot = np.prod(num_states)
     
@@ -123,16 +92,16 @@ def backward_induction(n_steps, volume, num_states, turbine_actions, basin_actio
         value += water_value_end*volume[k]*np.linspace(0,1, num_states[k])[kron_index(num_states, k)]
     
     # allocate momory
-    rewards_to_evaluate = np.zeros((turbine_actions.shape[0], num_states_tot))
+    rewards_to_evaluate = np.zeros((len(action_series[0]), num_states_tot))
     action_grid = np.zeros((n_steps, num_states_tot), dtype=np.int64)
     value_grid = np.zeros((n_steps,num_states_tot))
     
-    # make core actions
-    actions = []
-    for (turbine_action, basin_action) in zip(turbine_actions, basin_actions):
-        actions.append(CoreAction(turbine_action, basin_action, volume, num_states))
+    # # make core actions
+    # actions = []
+    # for (turbine_action, basin_action) in zip(turbine_actions, basin_actions):
+    #     actions.append(CoreAction(turbine_action, basin_action, volume, num_states))
         
-    action_series = n_steps*[actions, ]
+    # action_series = n_steps*[actions, ]
     
     # loop backwards through time (backward induction)
     for backward_step_index in np.flip(np.arange(n_steps)):
