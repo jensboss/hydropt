@@ -154,10 +154,15 @@ class PowerPlantActions():
         return [power_plant_action.turbine_power(constraints) 
                 for power_plant_action in self.power_plant_actions]
         
-    
     def basin_flow_rates(self, constraints=None):
         return [power_plant_action.basin_flow_rates(constraints) 
                 for power_plant_action in self.power_plant_actions]
+    
+    def __getitem__(self, index):
+        return self.power_plant_actions[index]
+    
+    def __iter__(self):
+        return iter(self.power_plant_actions)
     
     def __len__(self):
         return len(self.power_plant_actions)

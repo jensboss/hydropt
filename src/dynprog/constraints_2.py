@@ -124,37 +124,81 @@ class TurbineConstraint():
             
                 
     
-def make_constraint_series(time_start, time_end, constraints):
+class ConstraintsSeries():
+    def __init__(self, time_start, time_end, constraints):
         
-    time_start = np.datetime64(time_start)
-    time_end =  np.datetime64(time_end)
-    
-    time = np.arange(start_time, end_time)
-   
-    
-
-    indices = np.arange(len(time))
-    
-    series = [{} for i in indices]
-    
-    for constraint in constraints:
-        ind = indices[(time>=constraint.time_start) & (time<constraint.time_end)]
+        self._time_start = np.datetime64(time_start)
+        self._time_end =  np.datetime64(time_end)
         
-        for i in ind:
+        self._time = np.arange(start_time, end_time)
+       
+        indices = np.arange(len(self._time))
+        
+        self._data = [{} for i in indices]
+        
+        for constraint in constraints:
+            ind = indices[(self._time>=constraint.time_start) & (self._time<constraint.time_end)]
             
-            const_dict = series[i]
-            
-            if constraint.turbine in const_dict:
-                const_dict[constraint.turbine] += constraint
-            else:
-                const_dict[constraint.turbine] = constraint
+            for i in ind:
                 
-    return series    
-
+                const_dict = self._data[i]
+                
+                if constraint.turbine in const_dict:
+                    const_dict[constraint.turbine] += constraint
+                else:
+                    const_dict[constraint.turbine] = constraint
+                    
+    def normalized(self, turbines):
+        normalized_data = []
+        
+        for constraints in self._data:
+            
+            normalized_constraints = {}
+            
+            for turbine in turbines:
+                
+                if turbine in constraints:
+                    
+                    normalized_constraints[turbine] = constraints[turbine]
+                    
+                else:
+                    
+                    normalized_constraints[turbine] = TurbineConstraint(
+                        turbine, self.time_start, self.time_end)
+                    
+            normalized_data.append(normalized_constraints)
+                    
+        return normalized_data
+                    
+    @property
+    def time(self):
+        return self._time
+    
+    @property
+    def data(self):
+        return self._data
+    
+    @property
+    def time_start(self):
+        return self._time_start
+    
+    @property
+    def time_end(self):
+        return self._time_end
+    
+    def __getitem__(self, index):
+        return self._data[index]
+    
+    def __iter__(self):
+        return iter(self._data)
+    
+    
             
 if __name__ == '__main__':
     from dynprog.model import Basin, Outflow, Turbine, PowerPlant
     from dynprog.action import ActionStanding, ActionPowerMin, ActionPowerMax
+    
+    from dynprog.core import CoreAction
 
 
     basins = [Basin(name='basin_1', 
@@ -196,7 +240,7 @@ if __name__ == '__main__':
     
     power_plant = PowerPlant(basins, turbines, actions) 
     
-    pp_actions = power_plant.actions().power_plant_actions
+    pp_actions = power_plant.actions()
     
 
     constraints = [TurbineConstraint(turbines[0], '2020-07-29T00', '2020-07-29T02',
@@ -210,14 +254,40 @@ if __name__ == '__main__':
     start_time = np.datetime64('2020-07-28T23')
     end_time =  np.datetime64('2020-07-29T05')
     
-    constraint_series =  make_constraint_series(start_time, end_time, constraints)
+    constraints_series =  ConstraintsSeries(start_time, end_time, constraints)
         
-    turbine_power = pp_actions[1].turbine_power(constraint_series[3])
+    turbine_power = pp_actions[1].turbine_power(constraints_series[3])
     
-    print(turbine_power)
+    #make CoreActions
+    def compute_core_action_series(power_plant, constraints_series):
+        unique_core_actions = {}
+        core_action_series = []
+        
+        for contraints in constraints_series.normalized(turbines):
+            
+            key = tuple([tuple(constraint) for constraint in contraints.values()])
+            
+            if key not in unique_core_actions:
                 
+                core_actions = []
+                for pp_action in power_plant.actions():
+                    core_actions.append(
+                        CoreAction(
+                            pp_action.turbine_power(contraints), 
+                            pp_action.basin_flow_rates(contraints), 
+                            power_plant.basin_volumes(), 
+                            power_plant.basin_num_states())
+                        )
+                            
+                unique_core_actions[key] = core_actions
+                        
+            core_action_series.append(unique_core_actions[key])
             
-            
+        return core_action_series
+                
+
+    
+    
                 
         
         
