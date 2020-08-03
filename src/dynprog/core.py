@@ -96,12 +96,6 @@ def backward_induction(n_steps, volume, num_states, action_series,
     action_grid = np.zeros((n_steps, num_states_tot), dtype=np.int64)
     value_grid = np.zeros((n_steps,num_states_tot))
     
-    # # make core actions
-    # actions = []
-    # for (turbine_action, basin_action) in zip(turbine_actions, basin_actions):
-    #     actions.append(CoreAction(turbine_action, basin_action, volume, num_states))
-        
-    # action_series = n_steps*[actions, ]
     
     # loop backwards through time (backward induction)
     for backward_step_index in np.flip(np.arange(n_steps)):
@@ -137,29 +131,34 @@ def backward_induction(n_steps, volume, num_states, action_series,
     return action_grid, value_grid
 
 
-def forward_propagation(n_steps, volume, num_states, basins_contents, turbine_actions, basin_actions,
+def forward_propagation(n_steps, volume, num_states, basins_contents, action_series,
                         inflow, action_grid):
-    basin_actions_taken = np.zeros((n_steps, basin_actions.shape[1]))
-    turbine_actions_taken = np.zeros((n_steps, turbine_actions.shape[1]))
+    # TODO: Clean up.
+    basin_actions_taken = np.zeros((n_steps, action_series[0][0].basin_action.shape[0]))
+    turbine_actions_taken = np.zeros((n_steps, action_series[0][0].turbine_action.shape[0]))
     
     vol = np.zeros((n_steps+1, volume.shape[0]))
     vol[0,:] = basins_contents
     state_finder = kron_basis_map(num_states)
     
-    for k in np.arange(n_steps):
-        # print(np.int64(np.round((num_states-1)*vol[k, :]/volume)))
-        state_index = np.dot(state_finder, np.int64(np.round((num_states-1)*vol[k, :]/volume)))
+    for step_index, actions in enumerate(action_series):
+        
+        basin_actions = np.array([action.basin_action for action in actions])
+        turbine_actions = np.array([action.turbine_action for action in actions])
+        
+        state_index = np.dot(state_finder, np.int64(np.round((num_states-1)*vol[step_index, :]/volume)))
+        
         try:
-            basin_actions_taken[k] = basin_actions[action_grid[k, state_index]][:,state_index]
+            basin_actions_taken[step_index] = basin_actions[action_grid[step_index, state_index]][:,state_index]
         except IndexError as e:
             print(e)
             
         try:     
-            turbine_actions_taken[k] = turbine_actions[action_grid[k, state_index]][:,state_index]
+            turbine_actions_taken[step_index] = turbine_actions[action_grid[step_index, state_index]][:,state_index]
         except IndexError as e:
             print(e)
             
-        vol[k+1, :] = vol[k,:] - basin_actions_taken[k, :] + inflow[k, :]
+        vol[step_index+1, :] = vol[step_index,:] - basin_actions_taken[step_index, :] + inflow[step_index, :]
         
     return turbine_actions_taken, basin_actions_taken, vol
 

@@ -78,18 +78,28 @@ class ScenarioOptimizer():
             
         action_series = n_steps*[actions, ]
         
-        action_grid, value_grid = backward_induction(n_steps, volume, num_states, 
-                                                      action_series, inflow, 
-                                                      price_curve, water_value_end, penalty)
+        action_grid, value_grid = backward_induction(
+            n_steps, 
+            volume, 
+            num_states, 
+            action_series, 
+            inflow, 
+            price_curve, 
+            water_value_end, 
+            penalty)
+        
         t_end = time.time()
         print(t_end-t_start)
         
         t_start = time.time()
-        turbine_act_taken, basin_act_taken, vol = forward_propagation(n_steps, volume, 
-                                                                    num_states, basins_init_volumes,
-                                                                    turbine_actions, 
-                                                                    basin_actions, inflow, 
-                                                                    action_grid)
+        turbine_act_taken, basin_act_taken, vol = forward_propagation(
+            n_steps, 
+            volume, 
+            num_states, 
+            basins_init_volumes,
+            action_series, 
+            inflow, 
+            action_grid)
         
         t_end = time.time()
         print(t_end-t_start)
