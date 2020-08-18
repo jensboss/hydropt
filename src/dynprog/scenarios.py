@@ -27,7 +27,9 @@ class Underlyings():
     
         
 class Scenario():
-    def __init__(self, power_plant, underlyings, constraints=None, water_value_end=0, name=None):
+    def __init__(self, power_plant, underlyings, constraints=None, 
+                 water_value_end=0, basin_limit_penalty=1e14*3600, name=None):
+        
         self.power_plant = power_plant
         self.underlyings = underlyings
         
@@ -39,35 +41,33 @@ class Scenario():
         self.water_value_end = water_value_end
         self.name = name
         
-        
-class ScenarioOptimizer():
-    def __init__(self, scenario=None, basin_limit_penalty=1e14*3600):
-        self.scenario = scenario
         self.basin_limit_penalty = basin_limit_penalty
-        self.action_grid = None
-        self.value_grid = None
-        self.turbine_actions = None
+        
+        self.action_grid_ = None
+        self.value_grid_ = None
+        self.turbine_actions_ = None
         self.basin_actions = None
-        self.volume = None
+        self.volume_ = None
+        
         
     def run(self):
-        n_steps = self.scenario.underlyings.n_steps()
-        dt = self.scenario.underlyings.dt()
-        price_curve = self.scenario.underlyings.price_curve
-        inflow = self.scenario.underlyings.inflow*dt
+        n_steps = self.underlyings.n_steps()
+        dt = self.underlyings.dt()
+        price_curve = self.underlyings.price_curve
+        inflow = self.underlyings.inflow*dt
         
-        power_plant_actions = self.scenario.power_plant.actions()
+        power_plant_actions = self.power_plant.actions()
         
         turbine_actions = np.array(power_plant_actions.turbine_power())
         basin_actions = np.array(power_plant_actions.basin_flow_rates())*dt
         
-        volume = self.scenario.power_plant.basin_volumes()
-        num_states = self.scenario.power_plant.basin_num_states()
-        basins_init_volumes = self.scenario.power_plant.basin_init_volumes()
+        volume = self.power_plant.basin_volumes()
+        num_states = self.power_plant.basin_num_states()
+        basins_init_volumes = self.power_plant.basin_init_volumes()
         
         penalty = self.basin_limit_penalty  
         
-        water_value_end = self.scenario.water_value_end
+        water_value_end = self.water_value_end
         
         t_start = time.time()
         
@@ -104,12 +104,15 @@ class ScenarioOptimizer():
         t_end = time.time()
         print(t_end-t_start)
         
-        self.action_grid = action_grid
-        self.value_grid = value_grid
+        self.action_grid_ = action_grid
+        self.value_grid_ = value_grid
         
-        self.turbine_actions = turbine_act_taken
-        self.basin_actions = basin_act_taken
-        self.volume = vol
+        self.turbine_actions_ = turbine_act_taken
+        self.basin_actions_ = basin_act_taken
+        self.volume_ = vol
         
+        
+        
+
             
 

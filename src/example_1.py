@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from dynprog.model import Basin, Outflow, Turbine, PowerPlant
 from dynprog.action import ActionStanding, ActionPowerMin, ActionPowerMax
-from dynprog.scenarios import Scenario, ScenarioOptimizer, Underlyings
+from dynprog.scenarios import Scenario, Underlyings
 
 
 basins = [Basin(name='basin_1', 
@@ -75,16 +75,14 @@ inflow = 0.8*np.ones((n_steps,2))
 underlyings = Underlyings(time, hpfc, inflow)
 scenario = Scenario(power_plant, underlyings, name='base')
 
-
-optimizer = ScenarioOptimizer(scenario)
-optimizer.run()
+scenario.run()
 
 plt.figure(1)
 plt.clf()
 plt.plot(hpfc, marker='.', label='hpfc')
 plt.plot(10*inflow, marker='.', label='inflow')
-plt.plot(optimizer.turbine_actions/1e6, marker='.', label='action')
-plt.plot(np.arange(n_steps+1)-1,optimizer.volume/3600, marker='.', label='vol')
+plt.plot(scenario.turbine_actions_/1e6, marker='.', label='action')
+plt.plot(np.arange(n_steps+1)-1,scenario.volume_/3600, marker='.', label='vol')
 plt.legend()
 plt.show()
 
