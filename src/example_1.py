@@ -77,7 +77,7 @@ scenario = Scenario(power_plant, underlyings, name='base')
 
 scenario.run()
 
-plt.figure(1)
+plt.figure(2)
 plt.clf()
 plt.plot(hpfc, marker='.', label='hpfc')
 plt.plot(10*inflow, marker='.', label='inflow')

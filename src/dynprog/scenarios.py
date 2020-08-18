@@ -10,7 +10,7 @@ import numpy as np
 import time
 
 from dynprog.core import backward_induction, forward_propagation, CoreAction
-from dynprog.constraints import ConstrainedIntervals
+from dynprog.constraints import ConstraintsSeries
 
 
 class Underlyings():
@@ -25,18 +25,49 @@ class Underlyings():
     def dt(self):
         return (self.time[1]-self.time[0]) / np.timedelta64(1, 's')
     
+    
+
+def compute_core_action_series(power_plant, constraints_series, dt):
+    unique_core_actions = {}
+    core_action_series = []
+    
+    for contraints in constraints_series.normalized(power_plant.turbines):
+        
+        key = tuple([tuple(constraint) for constraint in contraints.values()])
+        
+        if key not in unique_core_actions:
+            
+            core_actions = []
+            for pp_action in power_plant.actions():
+                core_actions.append(
+                    CoreAction(
+                        np.array(pp_action.turbine_power(contraints)), 
+                        np.array(pp_action.basin_flow_rates(contraints))*dt, 
+                        power_plant.basin_volumes(), 
+                        power_plant.basin_num_states())
+                    )
+            
+            unique_core_actions[key] = core_actions      
+            
+        core_action_series.append(unique_core_actions[key])
+        
+    return core_action_series
+    
         
 class Scenario():
-    def __init__(self, power_plant, underlyings, constraints=None, 
+    def __init__(self, power_plant, underlyings, constraints_series=None, 
                  water_value_end=0, basin_limit_penalty=1e14*3600, name=None):
         
         self.power_plant = power_plant
         self.underlyings = underlyings
         
-        if constraints is None:
-            self.constraints = ConstrainedIntervals()
+        self.start_time = underlyings.time[0]
+        self.end_time = underlyings.time[-1] + (underlyings.time[1] - underlyings.time[0])
+        
+        if constraints_series is None:
+            self.constraints_series = ConstraintsSeries(self.start_time, self.end_time)
         else:
-            self.constraints = constraints
+            self.constraints_series = constraints_series
             
         self.water_value_end = water_value_end
         self.name = name
@@ -54,13 +85,10 @@ class Scenario():
         n_steps = self.underlyings.n_steps()
         dt = self.underlyings.dt()
         price_curve = self.underlyings.price_curve
+        
         inflow = self.underlyings.inflow*dt
         
-        power_plant_actions = self.power_plant.actions()
-        
-        turbine_actions = np.array(power_plant_actions.turbine_power())
-        basin_actions = np.array(power_plant_actions.basin_flow_rates())*dt
-        
+    
         volume = self.power_plant.basin_volumes()
         num_states = self.power_plant.basin_num_states()
         basins_init_volumes = self.power_plant.basin_init_volumes()
@@ -72,12 +100,9 @@ class Scenario():
         t_start = time.time()
         
         # make core actions
-        actions = []
-        for (turbine_action, basin_action) in zip(turbine_actions, basin_actions):
-            actions.append(CoreAction(turbine_action, basin_action, volume, num_states))
-            
-        action_series = n_steps*[actions, ]
+        action_series = compute_core_action_series(self.power_plant, self.constraints_series, dt)
         
+                
         action_grid, value_grid = backward_induction(
             n_steps, 
             volume, 

@@ -45,6 +45,7 @@ class ActionPowerFixed(ActionPower):
         power = self.constrain_power(constraints, self.power)
         
         num_plant_states = self.turbine.upper_basin.power_plant.num_states()
+        
         return power*np.ones((num_plant_states,))
     
     def flow_rates(self, constraints=None):
