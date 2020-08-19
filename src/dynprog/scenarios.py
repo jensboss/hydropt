@@ -14,10 +14,10 @@ from dynprog.constraints import ConstraintsSeries
 
 
 class Underlyings():
-    def __init__(self, time, price_curve=None, inflow=None):
+    def __init__(self, time, price_curve=None, inflow_rate=None):
         self.time = time
         self.price_curve = price_curve
-        self.inflow = inflow
+        self.inflow_rate = inflow_rate
         
     def n_steps(self):
         return self.time.shape[0]
@@ -55,7 +55,7 @@ def compute_core_action_series(power_plant, constraints_series, dt):
     
         
 class Scenario():
-    def __init__(self, power_plant, underlyings, constraints_series=None, 
+    def __init__(self, power_plant, underlyings, constraints=None, 
                  water_value_end=0, basin_limit_penalty=1e14*3600, name=None):
         
         self.power_plant = power_plant
@@ -64,10 +64,12 @@ class Scenario():
         self.start_time = underlyings.time[0]
         self.end_time = underlyings.time[-1] + (underlyings.time[1] - underlyings.time[0])
         
-        if constraints_series is None:
+        if constraints is None:
             self.constraints_series = ConstraintsSeries(self.start_time, self.end_time)
         else:
-            self.constraints_series = constraints_series
+            self.constraints_series = ConstraintsSeries(self.start_time, 
+                                                        self.end_time,
+                                                        constraints)
             
         self.water_value_end = water_value_end
         self.name = name
@@ -86,9 +88,8 @@ class Scenario():
         dt = self.underlyings.dt()
         price_curve = self.underlyings.price_curve
         
-        inflow = self.underlyings.inflow*dt
+        inflow = self.underlyings.inflow_rate*dt
         
-    
         volume = self.power_plant.basin_volumes()
         num_states = self.power_plant.basin_num_states()
         basins_init_volumes = self.power_plant.basin_init_volumes()
@@ -136,6 +137,12 @@ class Scenario():
         self.basin_actions_ = basin_act_taken
         self.volume_ = vol
         
+        
+    def valuation(self):
+        if self.turbine_actions_ is None:
+            RuntimeError('Need to run scenario first.')
+            
+        return np.dot(self.turbine_actions_.T, self.underlyings.price_curve).sum()/1e6
         
         
 

@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 20 16:13:07 2020
+Created on Wed Aug 19 20:42:16 2020
 
 @author: Jens
 """
 
+
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from dynprog.model import Basin, Outflow, Turbine, PowerPlant
 from dynprog.action import ActionStanding, ActionPowerMin, ActionPowerMax
 from dynprog.scenarios import Scenario, Underlyings
-
+from dynprog.constraints import TurbineConstraint
 
 basins = [Basin(name='basin_1', 
-                volume=81*3600, 
+                volume=81*3600*4, 
                 num_states=81, 
                 init_volume=10*3600, 
                 levels=(2000, 2120)),
           Basin(name='basin_2', 
-                volume=31*3600, 
+                volume=31*3600*4, 
                 num_states=41, 
                 init_volume=10*3600, 
                 levels=(1200, 1250))
@@ -52,38 +54,54 @@ actions = [ActionStanding(turbines[0]),
 
 power_plant = PowerPlant(basins, turbines, actions)    
 
+constraints = [TurbineConstraint(turbines[0], '2019-02-24T00', '2019-02-27T00',
+                                     name='test_0', power_max=0),
+               ]
 
-def date_range(start_time, end_time, sampling_time=None):
-    if sampling_time is None:
-        start_time = np.datetime64(start_time)
-        end_time = np.datetime64(end_time)
-    else:
-        start_time = np.datetime64(start_time, sampling_time)
-        end_time = np.datetime64(end_time, sampling_time)
-        
-    return np.arange(start_time, end_time)
-    
+market_data = pd.read_csv('data/data_2019.csv', 
+                          sep=';', 
+                          index_col=0,
+                          parse_dates=True)
 
-start_time = '2020-04-01T00' 
-end_time =  '2020-04-10'
-time = date_range(start_time, end_time)
+n_steps = 24*7*20
 
-n_steps = len(time)
-hpfc = 10*(np.sin(2*np.pi*2*np.arange(n_steps)/n_steps) + 1)
+time = market_data.index[0:n_steps].to_numpy().astype('datetime64[h]')
+spot = market_data.iloc[0:n_steps,2].to_numpy()
+
 inflow_rate = 0.8*np.ones((n_steps,2))
 
-underlyings = Underlyings(time, hpfc, inflow_rate)
+underlyings = Underlyings(time, spot, inflow_rate)
 scenario = Scenario(power_plant, underlyings, name='base')
 
-scenario.run()
+scenario_sdl = Scenario(power_plant, underlyings, constraints, name='SDL')
 
-plt.figure(1)
+scenario.run()
+scenario_sdl.run()
+
+#%%
+print(scenario.valuation(),
+      scenario_sdl.valuation(),
+      scenario.valuation()-scenario_sdl.valuation())
+
+#%%
+plt.figure(2)
 plt.clf()
-plt.plot(hpfc, marker='.', label='hpfc')
-plt.plot(10*inflow_rate, marker='.', label='inflow')
-plt.plot(scenario.turbine_actions_/1e6, marker='.', label='action')
-plt.plot(np.arange(n_steps+1)-1,scenario.volume_/3600, marker='.', label='vol')
+plt.plot(time,spot, marker='.', label='hpfc')
+plt.plot(time,10*inflow_rate, marker='.', label='inflow')
+plt.plot(time,scenario.turbine_actions_/1e6, marker='.', label='action')
+plt.plot(time,scenario.volume_[1:]/3600, marker='.', label='vol')
 plt.legend()
 plt.show()
 
-# print('EURO', np.sum(np.sum(optimizer.turbine_actions, axis=1)*hpfc)/1e6)
+plt.figure(3)
+plt.clf()
+plt.plot(time,spot, marker='.', label='hpfc')
+plt.plot(time,10*inflow_rate, marker='.', label='inflow')
+plt.plot(time,scenario_sdl.turbine_actions_/1e6, marker='.', label='action')
+plt.plot(time,scenario_sdl.volume_[1:]/3600, marker='.', label='vol')
+plt.legend()
+plt.show()
+
+
+
+
