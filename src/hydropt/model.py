@@ -8,8 +8,8 @@ Created on Thu Apr  9 17:14:02 2020
 
 import numpy as np
 
-from dynprog.core import kron_index, kron_indices
-from dynprog.action import PowerPlantActions, PowerPlantAction
+from hydropt.core import kron_index, kron_indices
+from hydropt.action import PowerPlantActions, PowerPlantAction
 
 
 class BasinLevels():

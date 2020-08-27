@@ -9,8 +9,8 @@ Created on Wed Apr 15 14:06:02 2020
 import numpy as np
 import time
 
-from dynprog.core import backward_induction, forward_propagation, CoreAction
-from dynprog.constraints import ConstraintsSeries
+from hydropt.core import backward_induction, forward_propagation, CoreAction
+from hydropt.constraints import ConstraintsSeries
 
 
 class Underlyings():
