@@ -53,7 +53,7 @@ constraints = [TurbineConstraint(turbines[0], '2019-02-24T00', '2019-02-27T00',
                                      name='test_0', power_max=0),
                ]
 
-market_data = pd.read_csv('../data/data_2019.csv', 
+market_data = pd.read_csv('../data/spot_prices_2019.csv', 
                           sep=';', 
                           index_col=0,
                           parse_dates=True)
