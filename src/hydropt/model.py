@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr  9 17:14:02 2020
-
-@author: Jens
-"""
-
 import numpy as np
 
 from hydropt.core import kron_index, kron_indices
@@ -13,6 +5,10 @@ from hydropt.action import PowerPlantActions, PowerPlantAction
 
 
 class BasinLevels():
+    """The basin levels correspond to the fill-levels of a basin given its 
+    linearly spaced volume states.
+    """
+    
     def __init__(self, empty, full=None, basin=None, vol_to_level_lut=None, 
                  basin_shape='wedge'):
         
@@ -56,34 +52,43 @@ class BasinLevels():
         
     @property
     def values(self):
+        
+        if self.basin is None:
             
-        vols = np.linspace(0, self.basin.volume, self.basin.num_states)
+            return np.array()
+            
+        else:
+            
+            vols = np.linspace(0, self.basin.volume, self.basin.num_states)
+            
+            vols_p = self.vol_to_level_lut[:,0]
+            levels_p = self.vol_to_level_lut[:,1]
+            
+            return np.interp(vols, vols_p, levels_p)
+
         
-        vols_p = self.vol_to_level_lut[:,0]
-        levels_p = self.vol_to_level_lut[:,1]
-        
-        return np.interp(vols, vols_p, levels_p)
-        
+    def __repr__(self):
+        return f"BasinLevels(basin='{self.basin}', {self.values})"
 
 
 class Basin():
+    """The basin is a reservoir of water. Each basin specifies a discrete set 
+    of states. The state space of the power plant is defined by the tensor
+    product between the states of the individual basins.
+    """
+    
     def __init__(self, name, volume, num_states, init_volume, levels, power_plant=None):
         self.name = name
         self.volume = volume
         self.num_states = num_states
+        
+        #TODO: move initial volume to scenario spec
         self.init_volume = init_volume
         
-        self._levels = None
         self.levels = levels
         
         self.power_plant = power_plant
         
-    def index(self):
-        if self.power_plant is None:
-            return None
-        else:
-            return self.power_plant.basin_index(self)
-       
     @property
     def levels(self):
         return self._levels
@@ -115,9 +120,12 @@ class Outflow(Basin):
         super().__init__(volume=1, num_states=2, init_volume=0, levels=outflow_level, name=name)
         
 
-
-        
+ 
 class Turbine():
+    """The turbine characterices the amount of power that is generated when 
+    water flows from the upper to the lower basin.
+    """
+    
     def __init__(self, name, max_power, base_load, 
                  upper_basin, lower_basin, efficiency):
         self.name = name
@@ -144,9 +152,7 @@ class Turbine():
     
 class PowerPlant():
     def __init__(self, basins=None, turbines=None, actions=None, constraints=None):
-        self._basins = []
-        self._basin_index = {}
-        self.add_basins(basins)      
+        self.basins = basins    
         self.turbines = turbines
         self._actions = actions
         self.constraints = constraints
@@ -155,14 +161,17 @@ class PowerPlant():
     def basins(self):
         return self._basins
     
-    def add_basins(self, basins):
+    @basins.setter
+    def basins(self, basins):
         for basin in basins:
             basin.power_plant = self
-            self._basins.append(basin)
-            self._basin_index[basin] = len(self._basins)-1
-        
+        self._basins = basins
+            
     def basin_index(self, basin):
-        return self._basin_index[basin]
+        try:
+            return self.basins.index(basin)
+        except ValueError:
+            return None # intended for outflow basin
         
     def basin_volumes(self):
         return np.array([basin.volume for basin in self.basins])

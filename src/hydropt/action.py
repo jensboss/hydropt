@@ -130,11 +130,14 @@ class PowerPlantAction():
     def basin_flow_rates(self, constraints=None):
         basins = self.power_plant.basins
         basin_flow_rates = len(basins)*[0]
+        
+        get_basin_index = self.power_plant.basin_index # methode to get index
+        
         for action in self.actions:
-            outflow_ind = action.turbine.upper_basin.index()
+            outflow_ind = get_basin_index(action.turbine.upper_basin)
             if outflow_ind is not None:
                 basin_flow_rates[outflow_ind] += action.flow_rates(constraints)
-            inflow_ind = action.turbine.lower_basin.index()
+            inflow_ind = get_basin_index(action.turbine.lower_basin)
             if inflow_ind is not None:
                 basin_flow_rates[inflow_ind] -= action.flow_rates(constraints)
                 
