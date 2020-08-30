@@ -198,13 +198,13 @@ class PowerPlant():
         turbine_actions = self.turbine_actions()
         num_actions = [len(a) for a in turbine_actions]
         combinations = kron_indices(num_actions, range(len(num_actions)))
-        power_plant_actions = []
+        power_plant_actions = PowerPlantActions()
         for comb in combinations:
-            group = []
+            pp_action = PowerPlantAction(self)
             for k in range(len(comb)):
-                group.append(turbine_actions[k][comb[k]])
-            power_plant_actions.append(PowerPlantAction(group, self))
-        return PowerPlantActions(power_plant_actions)
+                pp_action.append(turbine_actions[k][comb[k]])
+            power_plant_actions.append(pp_action)
+        return power_plant_actions
     
             
 

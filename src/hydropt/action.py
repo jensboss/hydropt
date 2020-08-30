@@ -119,13 +119,13 @@ class ActionFlowRateFixed(BaseAction):
 
 
 
-class PowerPlantAction():
-    def __init__(self, actions, power_plant=None):
-        self.actions = tuple(actions)
+class PowerPlantAction(list):
+    def __init__(self, power_plant=None, *args):
+        list.__init__(self, *args)
         self.power_plant = power_plant
         
     def turbine_power(self, constraints=None):
-        return [action.turbine_power(constraints) for action in self.actions]
+        return [action.turbine_power(constraints) for action in self]
     
     def basin_flow_rates(self, constraints=None):
         basins = self.power_plant.basins
@@ -133,7 +133,7 @@ class PowerPlantAction():
         
         get_basin_index = self.power_plant.basin_index # methode to get index
         
-        for action in self.actions:
+        for action in self:
             outflow_ind = get_basin_index(action.turbine.upper_basin)
             if outflow_ind is not None:
                 basin_flow_rates[outflow_ind] += action.flow_rates(constraints)
@@ -142,35 +142,31 @@ class PowerPlantAction():
                 basin_flow_rates[inflow_ind] -= action.flow_rates(constraints)
                 
         return basin_flow_rates
-        
-    def __len__(self):
-        return len(self.actions)
     
+    def append(self, action):
+        if isinstance(action, BaseAction):
+            list.append(self, action)
+        else:
+            raise ValueError('Object is no instance of BaseAction.')
+          
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.actions})"
+        action_list = [a for a in self]
+        return f"{self.__class__.__name__}({action_list})"
     
     
-class PowerPlantActions():
-    def __init__(self, power_plant_actions):
-        self.power_plant_actions = power_plant_actions
+class PowerPlantActions(list):
+    def __init__(self, *args):
+        list.__init__(self, *args)
         
     def turbine_power(self, constraints=None):
         return [power_plant_action.turbine_power(constraints) 
-                for power_plant_action in self.power_plant_actions]
+                for power_plant_action in self]
         
     def basin_flow_rates(self, constraints=None):
         return [power_plant_action.basin_flow_rates(constraints) 
-                for power_plant_action in self.power_plant_actions]
-    
-    def __getitem__(self, index):
-        return self.power_plant_actions[index]
-    
-    def __iter__(self):
-        return iter(self.power_plant_actions)
-    
-    def __len__(self):
-        return len(self.power_plant_actions)
+                for power_plant_action in self]
     
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.power_plant_actions})"
+        action_list = [a for a in self]
+        return f"{self.__class__.__name__}({action_list})"
         
