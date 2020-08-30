@@ -9,9 +9,9 @@ Created on Mon Apr 20 16:13:07 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dynprog.model import Basin, Outflow, Turbine, PowerPlant
-from dynprog.action import ActionStanding, ActionPowerMin, ActionPowerMax
-from dynprog.scenarios import Scenario, Underlyings
+from hydropt.model import Basin, Outflow, Turbine, PowerPlant
+from hydropt.action import ActionStanding, ActionPowerMin, ActionPowerMax
+from hydropt.scenarios import Scenario, Underlyings
 
 
 basins = [Basin(name='basin_1', 
