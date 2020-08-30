@@ -7,7 +7,7 @@ Created on Sun May 17 11:20:05 2020
 """
 
 import numpy as np
-from dynprog.core import kron_index
+from hydropt.core import kron_index
 
 def kron_index_ref(num_states, position):
     index = np.ones(1, dtype=np.int64)
