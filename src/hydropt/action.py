@@ -131,7 +131,7 @@ class PowerPlantAction(list):
         basins = self.power_plant.basins
         basin_flow_rates = len(basins)*[0]
         
-        get_basin_index = self.power_plant.basin_index # methode to get index
+        get_basin_index = self.power_plant.basin_index # method to get index
         
         for action in self:
             outflow_ind = get_basin_index(action.turbine.upper_basin)

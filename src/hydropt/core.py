@@ -9,6 +9,8 @@ Created on Thu Apr  9 17:14:02 2020
 import numpy as np
 import scipy.sparse as sparse
 
+import torch
+
 
 
 def transition_prob(V, num_states, q):
@@ -57,10 +59,6 @@ def kron_basis_map(num_states):
     return np.flip(np.cumprod(np.flip(num_states)))//num_states
 
 
-# def kron_action(q, m):
-#     return [f*np.ones((m,)) for f in q]
-
-
 class CoreAction():
     def __init__(self, turbine_action, basin_action, volumes, num_states):
         
@@ -93,8 +91,9 @@ def backward_induction(n_steps, volume, num_states, action_series,
     
     # allocate momory
     rewards_to_evaluate = np.zeros((len(action_series[0]), num_states_tot))
-    action_grid = np.zeros((n_steps, num_states_tot), dtype=np.int64)
-    value_grid = np.zeros((n_steps,num_states_tot))
+    
+    action_grid = []
+    value_grid = []
     
     
     # loop backwards through time (backward induction)
@@ -123,12 +122,11 @@ def backward_induction(n_steps, volume, num_states, action_series,
         
         # value of each state is given by the reward of the optimal action
         value = rewards_to_evaluate[optimal_action_index, np.arange(num_states_tot)]
-        
-        # fill action and value grids
-        action_grid[backward_step_index, :] = optimal_action_index
-        value_grid[backward_step_index, :] = value
+                
+        action_grid.append(optimal_action_index)
+        value_grid.append(value)
     
-    return action_grid, value_grid
+    return np.flipud(np.array(action_grid)), np.flipud(np.array(value_grid))
 
 
 def forward_propagation(n_steps, volume, num_states, basins_contents, action_series,
