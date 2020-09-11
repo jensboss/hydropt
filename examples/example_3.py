@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 19 20:42:16 2020
-
-@author: Jens
-"""
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -73,12 +64,12 @@ scenario_sdl = Scenario(power_plant, underlyings, constraints, name='SDL')
 scenario.run()
 scenario_sdl.run()
 
-#%%
+# print results
 print(scenario.valuation(),
       scenario_sdl.valuation(),
       scenario.valuation()-scenario_sdl.valuation())
 
-#%%
+# plot results
 plt.figure(2)
 plt.clf()
 plt.plot(time,spot, marker='.', label='hpfc')

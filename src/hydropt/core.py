@@ -1,16 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr  9 17:14:02 2020
-
-@author: Jens
-"""
-
 import numpy as np
 import scipy.sparse as sparse
-
-import torch
-
 
 
 def transition_prob(V, num_states, q):

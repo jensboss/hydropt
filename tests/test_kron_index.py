@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun May 17 11:20:05 2020
-
-@author: Jens
-"""
-
 import numpy as np
 from hydropt.core import kron_index
 
