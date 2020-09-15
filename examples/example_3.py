@@ -22,30 +22,29 @@ turbines = [Turbine('turbine_1',
                     base_load =  1e6,
                     efficiency=0.8, 
                     upper_basin=basins[0], 
-                    lower_basin=outflow),
+                    lower_basin=outflow,
+                    actions=[Standing(), 
+                             MinPower(),
+                             MaxPower()]),
             Turbine('turbine_2', 
                     max_power = 45e6,
                     base_load =  1e6,
                     efficiency=0.8,
                     upper_basin=basins[0], 
-                    lower_basin=outflow)
+                    lower_basin=outflow,
+                    actions=[Standing(), 
+                             MinPower(),
+                             MaxPower()])
             ]
 
-actions = [Standing(turbines[0]), 
-           MinPower(turbines[0]),
-           MaxPower(turbines[0]),
-           Standing(turbines[1]), 
-           MinPower(turbines[1]),
-           MaxPower(turbines[1])
-           ]
 
-power_plant = PowerPlant(basins, turbines, actions)    
+power_plant = PowerPlant(basins, turbines)    
 
 constraints = [TurbineConstraint(turbines[0], '2019-02-24T00', '2019-02-27T00',
                                      name='test_0', power_max=0),
                ]
 
-market_data = pd.read_csv('../data/spot_prices_2019.csv', 
+market_data = pd.read_csv('../src/hydropt/data/spot_prices_2019.csv', 
                           sep=';', 
                           index_col=0,
                           parse_dates=True)

@@ -127,7 +127,7 @@ class Turbine():
     """
     
     def __init__(self, name, max_power, base_load, 
-                 upper_basin, lower_basin, efficiency):
+                 upper_basin, lower_basin, efficiency, actions=None):
         self.name = name
         self.max_power = max_power
         self.base_load = base_load
@@ -135,6 +135,19 @@ class Turbine():
         self.lower_basin = lower_basin
         
         self.efficiency = efficiency
+        
+        self.actions = actions
+    
+    @property
+    def actions(self):
+        return self._actions
+    
+    @actions.setter
+    def actions(self, actions):
+        self._actions = []
+        for action in actions:
+            action.turbine = self
+            self._actions.append(action)
     
     def head(self):
         return self.upper_basin.kron_levels() - self.lower_basin.kron_levels()
@@ -151,11 +164,9 @@ class Turbine():
 
     
 class PowerPlant():
-    def __init__(self, basins=None, turbines=None, 
-                 actions=None, constraints=None, name=''):
+    def __init__(self, basins=None, turbines=None, constraints=None, name=''):
         self.basins = basins    
         self.turbines = turbines
-        self._actions = actions
         self.constraints = constraints
         self.name = name
         
@@ -191,10 +202,11 @@ class PowerPlant():
         return np.prod(self.basin_num_states())
     
     def turbine_actions(self):
-        actions = list()
-        for turbine in self.turbines:
-            actions.append([a for a in self._actions if a.turbine is turbine])
-        return actions
+        # actions = list()
+        # for turbine in self.turbines:
+        #     actions.append([a for a in self._actions if a.turbine is turbine])
+        # return actions
+        return [turbine.actions for turbine in self.turbines]
         
     def actions(self):
         turbine_actions = self.turbine_actions()
