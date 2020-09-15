@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from hydropt.model import Basin, Outflow, Turbine, PowerPlant
-from hydropt.action import ActionStanding, ActionPowerMin, ActionPowerMax
+from hydropt.action import Standing, MinPower, MaxPower
 from hydropt.scenarios import Scenario, Underlyings
 from hydropt.constraints import TurbineConstraint
 
@@ -35,12 +35,12 @@ turbines = [Turbine('turbine_1',
                     lower_basin=outflow)
             ]
 
-actions = [ActionStanding(turbines[0]), 
-           ActionPowerMin(turbines[0]),
-           ActionPowerMax(turbines[0]),
-           ActionStanding(turbines[1]), 
-           ActionPowerMin(turbines[1]),
-           ActionPowerMax(turbines[1])
+actions = [Standing(turbines[0]), 
+           MinPower(turbines[0]),
+           MaxPower(turbines[0]),
+           Standing(turbines[1]), 
+           MinPower(turbines[1]),
+           MaxPower(turbines[1])
            ]
 
 power_plant = PowerPlant(basins, turbines, actions)    
@@ -49,7 +49,7 @@ constraints = [TurbineConstraint(turbines[0], '2019-02-24T00', '2019-02-27T00',
                                      name='test_0', power_max=0),
                ]
 
-market_data = pd.read_csv('../data/spot_prices_2019.csv', 
+market_data = pd.read_csv('../src/hydropt/data/spot_prices_2019.csv', 
                           sep=';', 
                           index_col=0,
                           parse_dates=True)

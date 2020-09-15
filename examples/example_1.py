@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from hydropt.model import Basin, Outflow, Turbine, PowerPlant
-from hydropt.action import ActionStanding, ActionPowerMin, ActionPowerMax
+from hydropt.action import Standing, MinPower, MaxPower
 from hydropt.scenarios import Scenario, Underlyings
 
 
@@ -34,15 +34,15 @@ turbines = [Turbine('turbine_1',
                     lower_basin=outflow)
             ]
 
-actions = [ActionStanding(turbines[0]), 
-           ActionPowerMin(turbines[0]),
-           ActionPowerMax(turbines[0]),
-           ActionStanding(turbines[1]), 
-           ActionPowerMin(turbines[1]),
-           ActionPowerMax(turbines[1])
+actions = [Standing(turbines[0]), 
+           MinPower(turbines[0]),
+           MaxPower(turbines[0]),
+           Standing(turbines[1]), 
+           MinPower(turbines[1]),
+           MaxPower(turbines[1])
            ]
 
-power_plant = PowerPlant(basins, turbines, actions)    
+power_plant = PowerPlant(basins, turbines, actions, name='KW Pilatus')    
 
 
 def date_range(start_time, end_time, sampling_time=None):
@@ -59,7 +59,7 @@ def date_range(start_time, end_time, sampling_time=None):
 power_plant.summary()
 
 start_time = '2020-04-01T00' 
-end_time =  '2020-04-02'
+end_time =  '2020-04-10'
 time = date_range(start_time, end_time)
 
 n_steps = len(time)

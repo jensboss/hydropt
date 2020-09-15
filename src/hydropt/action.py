@@ -15,7 +15,7 @@ class BaseAction():
         return f"{self.__class__.__name__}({self.turbine})"
     
 
-class ActionPower(BaseAction):
+class PowerAction(BaseAction):
     def constrain_power(self, constraints, power):
         
         if constraints is not None and self.turbine in constraints:
@@ -27,7 +27,7 @@ class ActionPower(BaseAction):
         return constrained_power
 
 
-class ActionPowerFixed(ActionPower):
+class FixedPowerAction(PowerAction):
     def __init__(self, power, turbine=None):
         super().__init__(turbine)
         self.power = power
@@ -47,12 +47,12 @@ class ActionPowerFixed(ActionPower):
         return f"{self.__class__.__name__}({self.turbine}, power={self.power})"
 
     
-class ActionStanding(ActionPowerFixed):
+class Standing(FixedPowerAction):
     def __init__(self, turbine=None):
         super().__init__(0.0, turbine)
 
 
-class ActionPowerMin(ActionPower):
+class MinPower(PowerAction):
     def __init__(self, turbine=None):
         super().__init__(turbine)
         
@@ -72,7 +72,7 @@ class ActionPowerMin(ActionPower):
         return self.turbine.flow_rate(power_min)
     
 
-class ActionPowerMax(ActionPower):
+class MaxPower(PowerAction):
     def __init__(self, turbine=None):
         super().__init__(turbine)
         
@@ -90,25 +90,6 @@ class ActionPowerMax(ActionPower):
                                                self.turbine.max_power)
         
         return self.turbine.flow_rate(power_max)
-
-
-
-
-class ActionFlowRateFixed(BaseAction):
-    def __init__(self, flow_rate, turbine=None):
-        super().__init__(turbine)
-        self.flow_rate = flow_rate
-        
-    def turbine_power(self, constraints=None):
-        return self.turbine.power(self.flow_rate)
-    
-    def flow_rates(self, constraints=None):
-        num_plant_states = self.turbine.upper_basin.power_plant.num_states()
-        return self.flow_rate*np.ones((num_plant_states,))
-        
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.turbine}, flow_rate={self.flow_rate})"
-
 
 
 class PowerPlantAction(list):
