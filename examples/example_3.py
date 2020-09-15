@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
-from hydropt.model import Basin, Outflow, Turbine, PowerPlant
-from hydropt.action import Standing, MinPower, MaxPower
-from hydropt.scenarios import Scenario, Underlyings
+from hydropt import Basin, Outflow, Turbine, PowerPlant, \
+    Standing, MinPower, MaxPower, Scenario, Underlyings
+from hydropt import get_spot_data
 from hydropt.constraints import TurbineConstraint
 
 
@@ -44,10 +45,7 @@ constraints = [TurbineConstraint(turbines[0], '2019-02-24T00', '2019-02-27T00',
                                      name='test_0', power_max=0),
                ]
 
-market_data = pd.read_csv('../src/hydropt/data/spot_prices_2019.csv', 
-                          sep=';', 
-                          index_col=0,
-                          parse_dates=True)
+market_data = get_spot_data()
 
 n_steps = len(market_data)
 

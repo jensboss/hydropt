@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from hydropt.model import Basin, Outflow, Turbine, PowerPlant
-from hydropt.action import Standing, MinPower, MaxPower
-from hydropt.scenarios import Scenario, Underlyings
+from hydropt import Basin, Outflow, Turbine, PowerPlant, \
+    Standing, MinPower, MaxPower, Scenario, Underlyings
 
 
 basins = [

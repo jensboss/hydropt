@@ -1,12 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Apr 20 15:46:42 2020
+from hydropt.model import Basin, Outflow, Turbine, PowerPlant
+from hydropt.action import Standing, MinPower, MaxPower
+from hydropt.scenarios import Scenario, Underlyings
 
-@author: Jens
-"""
+import importlib.resources as pkg_resources
+import pandas as pd
 
-import hydropt.action as action
-import hydropt.constraints as constraints
-import hydropt.model as model
-import hydropt.scenarios as scenarios
+def get_spot_data():
+    ctx = pkg_resources.path('hydropt', 'data')
+
+    with ctx as path:
+        data = pd.read_csv(
+            path / 'spot_prices_2019.csv', 
+            sep=';', 
+            index_col=0,
+            parse_dates=True)
+        
+    return data
