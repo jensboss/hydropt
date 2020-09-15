@@ -56,8 +56,10 @@ def date_range(start_time, end_time, sampling_time=None):
     return np.arange(start_time, end_time)
     
 
+power_plant.summary()
+
 start_time = '2020-04-01T00' 
-end_time =  '2020-04-10'
+end_time =  '2020-04-02'
 time = date_range(start_time, end_time)
 
 n_steps = len(time)
@@ -78,4 +80,4 @@ plt.plot(np.arange(n_steps+1)-1,scenario.volume_/3600, marker='.', label='vol')
 plt.legend()
 plt.show()
 
-# print('EURO', np.sum(np.sum(optimizer.turbine_actions, axis=1)*hpfc)/1e6)
+print('EURO', np.sum(np.sum(scenario.turbine_actions_, axis=1)*hpfc)/1e6)

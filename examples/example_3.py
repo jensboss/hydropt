@@ -7,9 +7,10 @@ from hydropt.action import ActionStanding, ActionPowerMin, ActionPowerMax
 from hydropt.scenarios import Scenario, Underlyings
 from hydropt.constraints import TurbineConstraint
 
+
 basins = [Basin(name='basin_1', 
                 volume=75e6, 
-                num_states=201, 
+                num_states=101, 
                 init_volume=60e6, 
                 levels=(1700, 1792)),
           ]
@@ -54,7 +55,7 @@ n_steps = len(market_data)
 time = market_data.index[0:n_steps].to_numpy().astype('datetime64[h]')
 spot = market_data.iloc[0:n_steps,2].to_numpy()
 
-inflow_rate = 2.5*np.ones((n_steps,1))
+inflow_rate = 5*np.ones((n_steps,1))
 
 underlyings = Underlyings(time, spot, inflow_rate)
 scenario = Scenario(power_plant, underlyings, name='base')

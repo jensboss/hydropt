@@ -10,6 +10,8 @@ setup(
     description='Solves dynamical programming problems for the optimization of hydro power plants.',
     packages=['hydropt'],
     package_dir={'':'src'},
+    include_package_data=True,
+    package_data={'': ['data/*.csv']},
     long_description=long_description,
     long_description_content_type='text/markdown',
     classifiers=[

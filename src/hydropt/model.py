@@ -151,11 +151,13 @@ class Turbine():
 
     
 class PowerPlant():
-    def __init__(self, basins=None, turbines=None, actions=None, constraints=None):
+    def __init__(self, basins=None, turbines=None, 
+                 actions=None, constraints=None, name=''):
         self.basins = basins    
         self.turbines = turbines
         self._actions = actions
         self.constraints = constraints
+        self.name = name
         
     @property
     def basins(self):
@@ -205,6 +207,24 @@ class PowerPlant():
                 pp_action.append(turbine_actions[k][comb[k]])
             power_plant_actions.append(pp_action)
         return power_plant_actions
+    
+    def summary(self):
+        print("--------------------------------------------------")
+        print(f"Summary for Power Plant {self.name}:")
+        print("--------------------------------------------------")
+        print(f"Basins ({len(self.basins)}):")
+        for basin in self.basins:
+            print(f" - {basin.name}")
+            print(f"         volume:   {basin.volume}m3")
+            print(f"       # states:   {basin.num_states}")
+        print("--------------------------------------------------")
+        print(f"Turbines ({len(self.turbines)}):")
+        for turbine in self.turbines:
+            print(f" - {turbine.name}: {turbine.upper_basin.name} --> {turbine.lower_basin.name}")
+            print(f"     max. power:   {turbine.max_power/1e6}MW")
+            print(f"       baseload:   {turbine.base_load/1e6}MW")
+            print(f"     efficiency:   {turbine.efficiency*100}%")
+        print("--------------------------------------------------")
     
             
 
