@@ -13,6 +13,9 @@ pip install hydropt
 
 ## Usage
 
+The following example shows how *hydropt* can be used for the optimization of
+a simple hydro power plant with only one basin and a single turbine. 
+
 ```Python
 import numpy as np
 import hydropt as ho
