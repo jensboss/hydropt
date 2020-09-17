@@ -127,17 +127,23 @@ class Scenario():
 
         actions_taken = pd.DataFrame(
             index=self.underlyings.time,
-            data=turbine_act_taken,
-            columns=[t.name for t in self.power_plant.turbines]
+            data=turbine_act_taken/1e6,
+            columns=[t.name + ' (MWatt)' for t in self.power_plant.turbines]
         )
         
         volumes_seen = pd.DataFrame(
             index=self.underlyings.time,
-            data=vol[0:-1, :],
-            columns=[b.name for b in self.power_plant.basins]
+            data=vol[0:-1, :]/1e6,
+            columns=[b.name + ' (Mio. m3)' for b in self.power_plant.basins]
         )
         
-        self.results_ = actions_taken.join(volumes_seen)
+        price_curve_frame = pd.DataFrame(
+            index=self.underlyings.time,
+            data=self.underlyings.price_curve,
+            columns=['price curve (EUR/MWh)',]
+        )
+        
+        self.results_ = price_curve_frame.join(actions_taken).join(volumes_seen)
         
         
     def valuation(self):
