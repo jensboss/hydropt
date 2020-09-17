@@ -47,12 +47,12 @@ turbine = ho.Turbine(
 # Define power plant model
 power_plant = ho.PowerPlant([basin,], [turbine,]) 
 
-# load spot prices
-spot_prices = ho.load_spot_data()
+# Load spot prices
+spot_2019 = ho.load_spot_data()
 
 # Set optimization time frame and assign price curve
-time = spot_prices.index.to_numpy().astype('datetime64[h]')
-spot = spot_prices[''].to_numpy()
+time = spot_2019.index.to_numpy().astype('datetime64[h]')
+spot = spot_2019['Switzerland[EUR/MWh]'].to_numpy()
 
 # Compute inflow rate
 inflow_rate = 5*np.ones((len(spot),1))
@@ -64,6 +64,8 @@ scenario = ho.Scenario(power_plant, underlyings, name='base case')
 # Run optimization
 scenario.run()
 
+# ... wait about 30 seconds ...
+
 # Plot results
-scenario.results.plot()
+scenario.results_.plot()
 ```
