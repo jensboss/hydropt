@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import pandas as pd
 
 from hydropt.core import backward_induction, forward_propagation, CoreAction
 from hydropt.constraints import ConstraintsSeries
@@ -68,13 +69,7 @@ class Scenario():
         
         self.basin_limit_penalty = basin_limit_penalty
         
-        self.action_grid_ = None
-        self.value_grid_ = None
-        self.turbine_actions_ = None
-        self.basin_actions = None
-        self.volume_ = None
-        
-        
+
     def run(self):
         n_steps = self.underlyings.n_steps()
         dt = self.underlyings.dt()
@@ -128,6 +123,21 @@ class Scenario():
         self.turbine_actions_ = turbine_act_taken
         self.basin_actions_ = basin_act_taken
         self.volume_ = vol
+        
+
+        actions_taken = pd.DataFrame(
+            index=self.underlyings.time,
+            data=turbine_act_taken,
+            columns=[t.name for t in self.power_plant.turbines]
+        )
+        
+        volumes_seen = pd.DataFrame(
+            index=self.underlyings.time,
+            data=vol[0:-1, :],
+            columns=[b.name for b in self.power_plant.basins]
+        )
+        
+        self.results_ = actions_taken.join(volumes_seen)
         
         
     def valuation(self):
