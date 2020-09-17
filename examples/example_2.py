@@ -11,13 +11,13 @@ from hydropt.constraints import TurbineConstraint
 basins = [Basin(name='basin_1', 
                 volume=81*3600*4, 
                 num_states=81, 
-                init_volume=10*3600, 
-                levels=(2000, 2120)),
+                levels=(2000, 2120),
+                start_volume=36000),
           Basin(name='basin_2', 
                 volume=31*3600*4, 
-                num_states=41, 
-                init_volume=10*3600, 
-                levels=(1200, 1250))
+                num_states=41,
+                levels=(1200, 1250),
+                start_volume=36000)
           ]
 
 outflow = Outflow(outflow_level=600)
@@ -50,7 +50,7 @@ constraints = [TurbineConstraint(turbines[0], '2019-02-24T00', '2019-02-27T00',
                                      name='test_0', power_max=0),
                ]
 
-market_data = get_spot_data()
+market_data = load_spot_data()
 
 n_steps = 24*7*10
 

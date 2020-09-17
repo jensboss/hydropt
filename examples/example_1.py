@@ -7,26 +7,29 @@ from hydropt import Basin, Outflow, Turbine, PowerPlant, \
 
 basins = [
     Basin(
-        name='basin_1',
+        name='Mühlensee',
         volume=81*3600,
         num_states=81,
-        init_volume=10*3600,
-        levels=(2000, 2120)
+        levels=(2000, 2120),
+        start_volume=36000,
+        end_volume = 10000
     ),
     Basin(
-        name='basin_2',
+        name='Reusslifluhsee',
         volume=31*3600,
         num_states=41,
-        init_volume=10*3600,
-        levels=(1200, 1250)
+        levels=(1200, 1250),
+        start_volume=36000,
+        end_volume = 10000
     ),
 ]
 
-outflow = Outflow(outflow_level=600)
+outflow = Outflow(outflow_level=600, 
+                  name='Vierwaldstättersee')
 
 turbines = [
     Turbine(
-        'turbine_1',
+        'MG 1',
         max_power=33e6,
         base_load=10e6,
         efficiency=0.8,
@@ -39,7 +42,7 @@ turbines = [
         ]
     ),
     Turbine(
-        'turbine_2',
+        'MG 2',
         max_power=15e6,
         base_load=7e6,
         efficiency=0.8,

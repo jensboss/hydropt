@@ -5,7 +5,7 @@ from hydropt.scenarios import Scenario, Underlyings
 import importlib.resources as pkg_resources
 import pandas as pd
 
-def get_spot_data():
+def load_spot_data():
     ctx = pkg_resources.path('hydropt', 'data')
 
     with ctx as path:

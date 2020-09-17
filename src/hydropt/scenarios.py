@@ -84,7 +84,7 @@ class Scenario():
         
         volume = self.power_plant.basin_volumes()
         num_states = self.power_plant.basin_num_states()
-        basins_init_volumes = self.power_plant.basin_init_volumes()
+        basins_init_volumes = self.power_plant.basin_start_volumes()
         
         penalty = self.basin_limit_penalty  
         

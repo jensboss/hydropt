@@ -77,15 +77,16 @@ class Basin():
     product between the states of the individual basins.
     """
     
-    def __init__(self, name, volume, num_states, init_volume, levels, power_plant=None):
+    def __init__(self, name, volume, num_states, levels, 
+                 start_volume, end_volume=0, power_plant=None):
         self.name = name
         self.volume = volume
         self.num_states = num_states
-        
-        #TODO: move initial volume to scenario spec
-        self.init_volume = init_volume
-        
+                
         self.levels = levels
+        
+        self.start_volume = start_volume
+        self.end_volume = end_volume
         
         self.power_plant = power_plant
         
@@ -117,7 +118,8 @@ class Basin():
     
 class Outflow(Basin):
     def __init__(self, outflow_level, name='Outflow'):
-        super().__init__(volume=1, num_states=2, init_volume=0, levels=outflow_level, name=name)
+        super().__init__(volume=1, num_states=2, levels=outflow_level,
+                         start_volume=0, name=name)
         
 
  
@@ -192,8 +194,8 @@ class PowerPlant():
     def basin_num_states(self):
         return np.array([basin.num_states for basin in self.basins])
     
-    def basin_init_volumes(self):
-        return np.array([basin.init_volume for basin in self.basins])
+    def basin_start_volumes(self):
+        return np.array([basin.start_volume for basin in self.basins])
     
     def basin_names(self):
         return [basin.names for basin in self.basins]
@@ -202,10 +204,6 @@ class PowerPlant():
         return np.prod(self.basin_num_states())
     
     def turbine_actions(self):
-        # actions = list()
-        # for turbine in self.turbines:
-        #     actions.append([a for a in self._actions if a.turbine is turbine])
-        # return actions
         return [turbine.actions for turbine in self.turbines]
         
     def actions(self):
