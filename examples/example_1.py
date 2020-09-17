@@ -7,54 +7,54 @@ from hydropt import Basin, Outflow, Turbine, PowerPlant, \
 
 basins = [
     Basin(
-        name='basin_1', 
+        name='basin_1',
         volume=81*3600,
-        num_states=81, 
+        num_states=81,
         init_volume=10*3600,
         levels=(2000, 2120)
-        ),
+    ),
     Basin(
         name='basin_2',
         volume=31*3600,
         num_states=41,
-        init_volume=10*3600, 
+        init_volume=10*3600,
         levels=(1200, 1250)
-        ),
-    ]
+    ),
+]
 
 outflow = Outflow(outflow_level=600)
 
 turbines = [
     Turbine(
         'turbine_1',
-        max_power = 33e6,
-        base_load = 10e6,
-        efficiency=0.8, 
-        upper_basin=basins[0], 
+        max_power=33e6,
+        base_load=10e6,
+        efficiency=0.8,
+        upper_basin=basins[0],
         lower_basin=basins[1],
         actions=[
-            Standing(), 
+            Standing(),
             MinPower(),
             MaxPower()
-           ]
-        ),
+        ]
+    ),
     Turbine(
-        'turbine_2', 
-        max_power = 15e6,
-        base_load =  7e6,
+        'turbine_2',
+        max_power=15e6,
+        base_load=7e6,
         efficiency=0.8,
-        upper_basin=basins[1], 
+        upper_basin=basins[1],
         lower_basin=outflow,
         actions=[
-            Standing(), 
+            Standing(),
             MinPower(),
             MaxPower()
-           ]
-        ),
-    ]
+        ]
+    ),
+]
 
 
-power_plant = PowerPlant(basins, turbines, name='KW Pilatus')    
+power_plant = PowerPlant(basins, turbines, name='KW Pilatus')
 
 
 def date_range(start_time, end_time, sampling_time=None):
@@ -64,19 +64,18 @@ def date_range(start_time, end_time, sampling_time=None):
     else:
         start_time = np.datetime64(start_time, sampling_time)
         end_time = np.datetime64(end_time, sampling_time)
-        
+
     return np.arange(start_time, end_time)
-    
+
 
 power_plant.summary()
 
-start_time = '2020-04-01T00' 
-end_time =  '2020-04-10'
-time = date_range(start_time, end_time)
+time = date_range(start_time='2020-04-01T00',
+                  end_time='2020-04-10')
 
 n_steps = len(time)
 hpfc = 10*(np.sin(2*np.pi*2*np.arange(n_steps)/n_steps) + 1)
-inflow_rate = 0.8*np.ones((n_steps,2))
+inflow_rate = 0.8*np.ones((n_steps, 2))
 
 underlyings = Underlyings(time, hpfc, inflow_rate)
 scenario = Scenario(power_plant, underlyings, name='base')
@@ -88,7 +87,7 @@ plt.clf()
 plt.plot(hpfc, marker='.', label='hpfc')
 plt.plot(10*inflow_rate, marker='.', label='inflow')
 plt.plot(scenario.turbine_actions_/1e6, marker='.', label='action')
-plt.plot(np.arange(n_steps+1)-1,scenario.volume_/3600, marker='.', label='vol')
+plt.plot(np.arange(n_steps+1)-1, scenario.volume_/3600, marker='.', label='vol')
 plt.legend()
 plt.show()
 

@@ -48,14 +48,21 @@ class TestTensorKron():
    
     
 if __name__ == '__main__':
-    pass
-    # import timeit
+    import timeit
     
-    # num_states = [20,37,3,7]
-    # position = 0
+    n = 20
+    m = 50
+    A_array = np.random.rand(n,m)
+    B_array = np.random.rand(n,m)
+    
+    A_tensor = torch.tensor(A_array.tolist(), dtype=torch.float64)
+    B_tensor = torch.tensor(B_array.tolist(), dtype=torch.float64)
         
-    # t = timeit.timeit(lambda: kron_index(num_states, position), number=100)
-    # print('time new kron_index (in sec):', t)
+    t = timeit.timeit(lambda: tensor_kron(A_tensor, B_tensor), number=100)
+    print('time tensor_kron (in sec):', t)
     
-    # t = timeit.timeit(lambda: kron_index_ref(num_states, position), number=100)
-    # print('time ref kron_index (in sec):', t)
+    t = timeit.timeit(lambda: np.kron(B_tensor, B_array), number=100)
+    print('time numpy kron (in sec):', t)
+    
+    
+    
