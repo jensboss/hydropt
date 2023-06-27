@@ -15,6 +15,10 @@ def transition_prob(V, num_states, q):
 
 
 def simple_trans_matrix(V, num_states, q):
+    """Compute transition matrix for throughput that is constant for each 
+    basin.
+    """
+    
     L_combined = sparse.dia_matrix(np.ones((1,1)))
     for k in np.arange(V.shape[0]):
         # state with index 0 represents empty basin
@@ -69,21 +73,19 @@ class CoreAction():
 
 def backward_induction(n_steps, volume, num_states, action_series,
                        inflows, prices, water_value_end, penalty):
-   
-    
+
     num_states_tot = np.prod(num_states)
-    
+
     # initialize boundary condition (valuation of states at the end of optimization)
     value = np.zeros((num_states_tot, ))
     for k in np.arange(num_states.shape[0]):
         value += water_value_end*volume[k]*np.linspace(0,1, num_states[k])[kron_index(num_states, k)]
-    
+
     # allocate momory
     rewards_to_evaluate = np.zeros((len(action_series[0]), num_states_tot))
-    
+
     action_grid = []
     value_grid = []
-    
     
     # loop backwards through time (backward induction)
     for backward_step_index in np.flip(np.arange(n_steps)):
@@ -91,7 +93,7 @@ def backward_induction(n_steps, volume, num_states, action_series,
         inflow = inflows[backward_step_index, :]
         actions = action_series[backward_step_index]
         
-        # compute inflow transition matrix, which changes only with time
+        # compute inflow transition matrix, which only changes with time
         L_inflow = simple_trans_matrix(volume, num_states, -inflow)
         
         for action_index, action in enumerate(actions):

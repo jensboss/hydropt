@@ -5,7 +5,7 @@ register_matplotlib_converters()
 
 from hydropt import Basin, Outflow, Turbine, PowerPlant, \
     Standing, MinPower, MaxPower, Scenario, Underlyings
-from hydropt import get_spot_data
+from hydropt import load_spot_data
 from hydropt.constraints import TurbineConstraint
 
 

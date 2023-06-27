@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 
 with open('README.md', 'r') as file:
@@ -6,7 +6,7 @@ with open('README.md', 'r') as file:
 
 setup(
     name='hydropt',
-    version='0.0.2',
+    version='0.0.3',
     author="Jens Boss",
     author_email="bossjens@gmail.com",
     description='Solves dynamical programming problems for the optimization of hydro power plants.',
@@ -26,7 +26,8 @@ setup(
     install_requires=[
         "pandas>=0.25.3",
         "numpy>=1.17.4",
-        "scipy>=1.5.0"
+        "scipy>=1.5.0",
+        "matplotlib>=3.1.1",
     ],
     extras_require={
         "dev": [
